@@ -16,46 +16,11 @@ export default function AdminUserDetail({ user }) {
           </Link>
         </div>
 
-        {/* SECTION 1: What they wrote */}
-        <h2 className="text-xl font-bold text-black mb-4 border-b pb-2">
-          Reviews Written by {user.name} ({user.reviewsWritten.length})
-        </h2>
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mb-12">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 text-gray-700 border-b">
-              <tr>
-                <th className="p-3">Reviewing (Candidate)</th>
-                <th className="p-3 text-center">Behavior</th>
-                <th className="p-3 text-center">Social</th>
-                <th className="p-3 text-center">Academic</th>
-                <th className="p-3 text-right">Average</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {user.reviewsWritten.map((review) => {
-                const avg = ((review.behavior + review.social + review.academic) / 3).toFixed(1);
-                return (
-                  <tr key={review.id}>
-                    <td className="p-3 font-medium">{review.reviewee.name}</td>
-                    <td className="p-3 text-center">{review.behavior}</td>
-                    <td className="p-3 text-center">{review.social}</td>
-                    <td className="p-3 text-center">{review.academic}</td>
-                    <td className="p-3 text-right font-bold text-blue-600">{avg}</td>
-                  </tr>
-                );
-              })}
-              {user.reviewsWritten.length === 0 && (
-                <tr><td colSpan="5" className="p-4 text-center text-gray-500 italic">No reviews written yet.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* SECTION 2: What others wrote about them */}
+        {/* SECTION 1: What others wrote about them */}
         <h2 className="text-xl font-bold text-black mb-4 border-b pb-2">
           Reviews Received by {user.name} ({user.reviewsReceived.length})
         </h2>
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mb-12">
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-50 text-gray-700 border-b">
               <tr>
@@ -81,6 +46,41 @@ export default function AdminUserDetail({ user }) {
               })}
                {user.reviewsReceived.length === 0 && (
                 <tr><td colSpan="5" className="p-4 text-center text-gray-500 italic">No reviews received yet.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* SECTION 2: What they wrote */}
+        <h2 className="text-xl font-bold text-black mb-4 border-b pb-2">
+          Reviews Written by {user.name} ({user.reviewsWritten.length})
+        </h2>
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-gray-50 text-gray-700 border-b">
+              <tr>
+                <th className="p-3">Reviewing (Candidate)</th>
+                <th className="p-3 text-center">Behavior</th>
+                <th className="p-3 text-center">Social</th>
+                <th className="p-3 text-center">Academic</th>
+                <th className="p-3 text-right">Average</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {user.reviewsWritten.map((review) => {
+                const avg = ((review.behavior + review.social + review.academic) / 3).toFixed(1);
+                return (
+                  <tr key={review.id}>
+                    <td className="p-3 font-medium">{review.reviewee.name}</td>
+                    <td className="p-3 text-center">{review.behavior}</td>
+                    <td className="p-3 text-center">{review.social}</td>
+                    <td className="p-3 text-center">{review.academic}</td>
+                    <td className="p-3 text-right font-bold text-blue-600">{avg}</td>
+                  </tr>
+                );
+              })}
+              {user.reviewsWritten.length === 0 && (
+                <tr><td colSpan="5" className="p-4 text-center text-gray-500 italic">No reviews written yet.</td></tr>
               )}
             </tbody>
           </table>

@@ -12,6 +12,12 @@ export default async function handler(req, res) {
   const { revieweeId, behavior, social, academic } = req.body;
 
   try {
+    // Check if reviews are enabled
+    const settings = await prisma.systemSettings.findFirst();
+    if (settings && !settings.reviewsEnabled) {
+      return res.status(403).json({ message: 'Review submissions are currently disabled' });
+    }
+
     // UPSERT: The magic command for "Create or Edit"
     await prisma.review.upsert({
       where: {

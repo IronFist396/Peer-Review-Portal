@@ -1,11 +1,21 @@
 // pages/candidates.jsx
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession, getSession } from "next-auth/react";
+import { prisma } from "@/lib/prisma";
+import { useRouter } from "next/router";
 
-export default function CandidatesPage() {
+export default function CandidatesPage({ hasSubmitted }) {
   const { data: session } = useSession();
+  const router = useRouter();
   
+  // Redirect if user has submitted (client-side backup)
+  useEffect(() => {
+    if (hasSubmitted) {
+      router.push('/dashboard');
+    }
+  }, [hasSubmitted, router]);
+
   // We now have two data sources: Search Results and Recommendations
   const [candidates, setCandidates] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
@@ -172,4 +182,33 @@ export default function CandidatesPage() {
       </div>
     </div>
   );
+}
+// Server-side check to prevent access after submission
+export async function getServerSideProps(context) {
+  const session = await getSession(context);
+
+  if (!session) {
+    return { redirect: { destination: "/", permanent: false } };
+  }
+
+  // Check if user has submitted
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { hasSubmitted: true }
+  });
+
+  // Redirect to dashboard if already submitted
+  if (user?.hasSubmitted) {
+    return { redirect: { destination: "/dashboard", permanent: false } };
+  }
+
+  // Check if reviews are enabled
+  const settings = await prisma.systemSettings.findFirst();
+  if (settings && !settings.reviewsEnabled) {
+    return { redirect: { destination: "/dashboard", permanent: false } };
+  }
+
+  return {
+    props: { hasSubmitted: false }
+  };
 }

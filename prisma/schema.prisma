@@ -17,6 +17,8 @@ model User {
   department    String?  // New Field
   year          Int?     // New Field
   isAdmin       Boolean  @default(false) // Admin users won't appear in review pool
+  hasSubmitted  Boolean  @default(false) // Whether user has finalized their reviews
+  submittedAt   DateTime? // When they submitted
   
   // NEW FIELDS
   hostel        String?  // e.g., "Hostel 1"
@@ -46,4 +48,9 @@ model Review {
 
   // Prevent duplicate reviews: A user can review another user only once
   @@unique([reviewerId, revieweeId])
+}
+model SystemSettings {
+  id                    String   @id @default(cuid())
+  reviewsEnabled        Boolean  @default(true) // Kill switch for submissions
+  updatedAt             DateTime @updatedAt
 }

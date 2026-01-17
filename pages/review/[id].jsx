@@ -100,6 +100,23 @@ export async function getServerSideProps(context) {
   const session = await getSession(context);
   if (!session) return { redirect: { destination: "/", permanent: false } };
 
+  // Check if user has already submitted their reviews
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { hasSubmitted: true }
+  });
+
+  // If they've submitted, block access to review pages
+  if (currentUser?.hasSubmitted) {
+    return { redirect: { destination: "/dashboard", permanent: false } };
+  }
+
+  // Check if reviews are enabled
+  const settings = await prisma.systemSettings.findFirst();
+  if (settings && !settings.reviewsEnabled) {
+    return { redirect: { destination: "/dashboard", permanent: false } };
+  }
+
   const candidateId = context.params.id;
 
   // 1. Get Candidate Info
