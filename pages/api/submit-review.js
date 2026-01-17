@@ -1,0 +1,45 @@
+// pages/api/submit-review.js
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).end();
+
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) return res.status(401).json({ message: 'Unauthorized' });
+
+  const { revieweeId, behavior, social, academic } = req.body;
+
+  try {
+    // UPSERT: The magic command for "Create or Edit"
+    await prisma.review.upsert({
+      where: {
+        // We look for a unique combo of YOU (reviewer) and THEM (reviewee)
+        reviewerId_revieweeId: {
+          reviewerId: session.user.id,
+          revieweeId: revieweeId,
+        },
+      },
+      // If found, update these fields
+      update: {
+        behavior: parseInt(behavior),
+        social: parseInt(social),
+        academic: parseInt(academic),
+      },
+      // If NOT found, create a new one
+      create: {
+        reviewerId: session.user.id,
+        revieweeId: revieweeId,
+        behavior: parseInt(behavior),
+        social: parseInt(social),
+        academic: parseInt(academic),
+      },
+    });
+
+    return res.status(200).json({ message: 'Success' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Database error' });
+  }
+}

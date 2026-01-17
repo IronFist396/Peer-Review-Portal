@@ -1,0 +1,49 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  name          String?
+  department    String?  // New Field
+  year          Int?     // New Field
+  isAdmin       Boolean  @default(false) // Admin users won't appear in review pool
+  
+  // NEW FIELDS
+  hostel        String?  // e.g., "Hostel 1"
+  pors          String[] // This stores a list: ["Music Club", "Sports Team"]
+  
+  // Relations
+  reviewsWritten Review[] @relation("WrittenReviews")
+  reviewsReceived Review[] @relation("ReceivedReviews")
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  // The Ratings
+  behavior    Int
+  social      Int
+  academic    Int
+  feedback    String?
+
+  // Linking to Users
+  reviewer    User     @relation("WrittenReviews", fields: [reviewerId], references: [id])
+  reviewerId  String
+
+  reviewee    User     @relation("ReceivedReviews", fields: [revieweeId], references: [id])
+  revieweeId  String
+
+  // Prevent duplicate reviews: A user can review another user only once
+  @@unique([reviewerId, revieweeId])
+}
