@@ -37,22 +37,22 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
   // If user has already submitted, show different UI
   if (user.hasSubmitted) {
     return (
-      <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-green-50 to-blue-50">
         <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">Welcome, {user.name}</h1>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Welcome, {user.name}</h1>
             <LogoutButton />
           </div>
 
           {/* Success Message */}
-          <div className="bg-white p-8 rounded-lg shadow-lg mb-6 border-t-4 border-green-500">
+          <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg mb-6 border-t-4 border-green-500">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-2xl">✓</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-xl sm:text-2xl">✓</span>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-green-700">Reviews Submitted!</h2>
-                <p className="text-gray-600 text-sm">
+                <h2 className="text-xl sm:text-2xl font-bold text-green-700">Reviews Submitted!</h2>
+                <p className="text-gray-600 text-xs sm:text-sm">
                   {user.submittedAt ? `Submitted on ${user.submittedAt}` : 'Submitted'}
                 </p>
               </div>
@@ -63,39 +63,39 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
           </div>
 
           {/* Review Summary */}
-          <div className="bg-white p-6 rounded-lg shadow mb-6">
-            <h3 className="text-xl font-bold mb-4 text-gray-800">Your Review Summary</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded border border-blue-200">
-                <p className="text-3xl font-bold text-blue-700">{reviewCount}</p>
-                <p className="text-sm text-gray-600">Reviews Written</p>
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
+            <h3 className="text-lg sm:text-xl font-bold mb-4 text-gray-800">Your Review Summary</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+              <div className="bg-blue-50 p-4 sm:p-4 rounded border border-blue-200">
+                <p className="text-2xl sm:text-3xl font-bold text-blue-700">{reviewCount}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Reviews Written</p>
               </div>
-              <div className="bg-purple-50 p-4 rounded border border-purple-200">
-                <p className="text-3xl font-bold text-purple-700">
+              <div className="bg-purple-50 p-4 sm:p-4 rounded border border-purple-200">
+                <p className="text-2xl sm:text-3xl font-bold text-purple-700">
                   {reviewCount > 0 
                     ? (reviewsWritten.reduce((sum, r) => sum + r.behavior + r.social + r.academic, 0) / (reviewCount * 3)).toFixed(1)
                     : '0'}
                 </p>
-                <p className="text-sm text-gray-600">Average Rating Given</p>
+                <p className="text-xs sm:text-sm text-gray-600">Average Rating Given</p>
               </div>
-              <div className="bg-green-50 p-4 rounded border border-green-200">
-                <p className="text-3xl font-bold text-green-700">100%</p>
-                <p className="text-sm text-gray-600">Completion</p>
+              <div className="bg-green-50 p-4 sm:p-4 rounded border border-green-200">
+                <p className="text-2xl sm:text-3xl font-bold text-green-700">100%</p>
+                <p className="text-xs sm:text-sm text-gray-600">Completion</p>
               </div>
             </div>
 
             {/* List of reviewed candidates */}
             <div>
-              <h4 className="font-semibold mb-3 text-gray-700">People You Reviewed:</h4>
+              <h4 className="text-sm sm:text-base font-semibold mb-3 text-gray-700">People You Reviewed:</h4>
               <div className="space-y-2">
                 {reviewsWritten.map((review) => (
-                  <div key={review.id} className="flex justify-between items-center p-3 bg-gray-50 rounded border border-gray-200">
+                  <div key={review.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-gray-50 rounded border border-gray-200 gap-2">
                     <div>
-                      <p className="font-medium text-gray-800">{review.reviewee.name}</p>
+                      <p className="text-sm sm:text-base font-medium text-gray-800">{review.reviewee.name}</p>
                       <p className="text-xs text-gray-500">{review.reviewee.department}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-mono text-gray-600">
+                    <div className="text-left sm:text-right">
+                      <p className="text-xs sm:text-sm font-mono text-gray-600">
                         Avg: {((review.behavior + review.social + review.academic) / 3).toFixed(1)}/10
                       </p>
                     </div>
@@ -111,23 +111,23 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
 
   // Normal dashboard for users who haven't submitted yet
   return (
-    <div className="min-h-screen p-8 bg-gray-50">
+    <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gray-50">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Welcome, {user.name}</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold">Welcome, {user.name}</h1>
           <LogoutButton />
         </div>
 
         {/* Progress Bar */}
-        <div className="bg-white p-6 rounded shadow mb-6">
-          <h2 className="text-xl font-semibold mb-2">Review Progress</h2>
-          <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+        <div className="bg-white p-4 sm:p-6 rounded shadow mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-2">Review Progress</h2>
+          <div className="w-full bg-gray-200 rounded-full h-3 sm:h-4 mb-4">
             <div 
-              className={`h-4 rounded-full transition-all ${isCompleted ? 'bg-green-500' : 'bg-blue-500'}`} 
+              className={`h-3 sm:h-4 rounded-full transition-all ${isCompleted ? 'bg-green-500' : 'bg-blue-500'}`} 
               style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
-          <p className="text-gray-700">
+          <p className="text-sm sm:text-base text-gray-700">
             {reviewCount} / 5 reviews completed.
             {!isCompleted && <span className="text-red-600 ml-2">You need {5 - reviewCount} more to submit.</span>}
           </p>
@@ -135,12 +135,12 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
 
         {/* Reviews Disabled Warning */}
         {!reviewsEnabled && (
-          <div className="bg-red-50 border-2 border-red-300 p-6 rounded-lg mb-6">
-            <div className="flex items-start gap-3">
-              <span className="text-3xl"></span>
+          <div className="bg-red-50 border-2 border-red-300 p-4 sm:p-6 rounded-lg mb-6">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <span className="text-2xl sm:text-3xl"></span>
               <div>
-                <h3 className="font-bold text-lg text-red-800 mb-2">Review Submissions Currently Disabled</h3>
-                <p className="text-red-700">
+                <h3 className="font-bold text-base sm:text-lg text-red-800 mb-2">Review Submissions Currently Disabled</h3>
+                <p className="text-sm sm:text-base text-red-700">
                   The review system has been disabled by administrators. You cannot write, edit, or submit reviews at this time. Please check back later. If you think this is an error, contact SMP OCs.
                 </p>
               </div>
@@ -149,10 +149,10 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <Link 
             href="/candidates" 
-            className={`px-6 py-3 rounded font-bold ${
+            className={`px-6 py-3 rounded font-bold text-center ${
               reviewsEnabled 
                 ? 'bg-blue-600 text-white hover:bg-blue-700' 
                 : 'bg-gray-400 text-gray-200 cursor-not-allowed pointer-events-none'
@@ -164,7 +164,7 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
           <button 
             disabled={!isCompleted || !reviewsEnabled}
             onClick={() => setShowConfirmModal(true)}
-            className={`px-6 py-3 rounded font-bold text-white ${
+            className={`px-6 py-3 rounded font-bold text-white text-center ${
               (isCompleted && reviewsEnabled) 
                 ? 'bg-green-600 hover:bg-green-700' 
                 : 'bg-gray-400 cursor-not-allowed'
@@ -176,7 +176,7 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
 
         {user.isAdmin && (
           <div className="mt-6">
-            <Link href="/admin" className="text-blue-600 hover:underline font-medium">
+            <Link href="/admin" className="text-sm sm:text-base text-blue-600 hover:underline font-medium">
               → Go to Admin Panel
             </Link>
           </div>

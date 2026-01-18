@@ -86,11 +86,11 @@ export default function CandidatesPage({ hasSubmitted }) {
   }
 
   return (
-    <div className="min-h-screen bg-white text-black p-8">
+    <div className="min-h-screen bg-white text-black p-4 sm:p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-black">Find Candidates</h1>
-          <Link href="/dashboard" className="text-blue-600 hover:underline">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-black">Find Candidates</h1>
+          <Link href="/dashboard" className="text-sm sm:text-base text-blue-600 hover:underline">
             Back to Dashboard
           </Link>
         </div>
@@ -102,15 +102,15 @@ export default function CandidatesPage({ hasSubmitted }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search all candidates..."
-            className="w-full border border-gray-300 p-3 rounded-lg bg-white text-black focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 p-3 sm:p-3 rounded-lg bg-white text-base sm:text-sm text-black focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         {/* 3 Tabs */}
-        <div className="flex border-b border-gray-200 mb-6 gap-4">
+        <div className="flex border-b border-gray-200 mb-6 gap-2 sm:gap-4 overflow-x-auto">
            <button
             onClick={() => setActiveTab("suggested")}
-            className={`pb-2 font-medium px-2 ${
+            className={`pb-2 font-medium px-3 sm:px-2 text-sm sm:text-base whitespace-nowrap ${
               activeTab === "suggested" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500"
             }`}
           >
@@ -118,7 +118,7 @@ export default function CandidatesPage({ hasSubmitted }) {
           </button>
           <button
             onClick={() => setActiveTab("all")}
-            className={`pb-2 font-medium px-2 ${
+            className={`pb-2 font-medium px-3 sm:px-2 text-sm sm:text-base whitespace-nowrap ${
               activeTab === "all" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500"
             }`}
           >
@@ -126,7 +126,7 @@ export default function CandidatesPage({ hasSubmitted }) {
           </button>
           <button
             onClick={() => setActiveTab("reviewed")}
-            className={`pb-2 font-medium px-2 ${
+            className={`pb-2 font-medium px-3 sm:px-2 text-sm sm:text-base whitespace-nowrap ${
               activeTab === "reviewed" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500"
             }`}
           >
@@ -135,9 +135,9 @@ export default function CandidatesPage({ hasSubmitted }) {
         </div>
 
         {/* The List */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {displayedList.length === 0 && !loading && (
-             <p className="text-gray-500 text-center py-8">
+             <p className="text-sm sm:text-base text-gray-500 text-center py-8">
                {activeTab === "suggested" && "No direct matches found. Try searching in 'All Candidates'."}
                {activeTab === "all" && "No candidates found."}
                {activeTab === "reviewed" && "You haven't reviewed anyone yet."}
@@ -145,9 +145,9 @@ export default function CandidatesPage({ hasSubmitted }) {
           )}
 
           {displayedList.map((user) => (
-            <div key={user.id} className="border border-gray-200 p-4 rounded-lg bg-white shadow-sm flex justify-between items-center">
-              <div>
-                <h3 className="font-bold text-lg text-black">
+            <div key={user.id} className="border border-gray-200 p-4 rounded-lg bg-white shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="flex-1">
+                <h3 className="font-bold text-base sm:text-lg text-black">
                   {user.name} 
                   {/* Show Match Reason Badge for Suggested Tab */}
                   {activeTab === "suggested" && user.matchTag && (
@@ -156,7 +156,7 @@ export default function CandidatesPage({ hasSubmitted }) {
                     </span>
                   )}
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs sm:text-sm text-gray-600">
                   {user.department} • {user.hostel || "No Hostel"} • Year {user.year}
                 </p>
               </div>
@@ -164,14 +164,14 @@ export default function CandidatesPage({ hasSubmitted }) {
               {user.hasReviewed ? (
                 <Link
                   href={`/review/${user.id}`}
-                  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 font-medium border border-yellow-600"
+                  className="w-full sm:w-auto px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 font-medium border border-yellow-600 text-center text-sm sm:text-base"
                 >
                   Edit
                 </Link>
               ) : (
                 <Link
                   href={`/review/${user.id}`}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
+                  className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium text-center text-sm sm:text-base"
                 >
                   Review
                 </Link>

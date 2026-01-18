@@ -30,21 +30,21 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
   };
 
   return (
-    <div className="min-h-screen bg-white text-black p-8">
+    <div className="min-h-screen bg-white text-black p-4 sm:p-6 md:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-black">Admin Panel</h1>
-          <Link href="/dashboard" className="text-blue-600 hover:underline">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-black">Admin Panel</h1>
+          <Link href="/dashboard" className="text-sm sm:text-base text-blue-600 hover:underline">
             Back to User Dashboard
           </Link>
         </div>
 
         {/* Kill Switch */}
-        <div className={`mb-6 p-4 rounded-lg border-2 ${reviewsEnabled ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="font-bold text-lg">Review Submission Status</h3>
-              <p className="text-sm text-gray-600">
+        <div className={`mb-6 p-4 sm:p-4 rounded-lg border-2 ${reviewsEnabled ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex-1">
+              <h3 className="font-bold text-base sm:text-lg">Review Submission Status</h3>
+              <p className="text-xs sm:text-sm text-gray-600">
                 {reviewsEnabled 
                   ? "Students can currently submit and edit reviews" 
                   : "Review submissions are disabled - students will see a message"}
@@ -53,18 +53,19 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
             <button
               onClick={handleToggle}
               disabled={isToggling}
-              className={`px-6 py-3 rounded font-bold text-white transition-colors ${
+              className={`w-full sm:w-auto px-6 py-3 rounded font-bold text-white transition-colors text-sm sm:text-base ${
                 reviewsEnabled 
                   ? 'bg-red-600 hover:bg-red-700' 
                   : 'bg-green-600 hover:bg-green-700'
               } disabled:opacity-50`}
             >
-              {isToggling ? "Updating..." : (reviewsEnabled ? "🔴 Disable Reviews" : "🟢 Enable Reviews")}
+              {isToggling ? "Updating..." : (reviewsEnabled ? "Disable Reviews" : "Enable Reviews")}
             </button>
           </div>
         </div>
 
-        <div className="bg-white shadow border border-gray-200 rounded-lg overflow-hidden">
+        {/* Desktop Table View - Hidden on Mobile */}
+        <div className="hidden md:block bg-white shadow border border-gray-200 rounded-lg overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-100 text-gray-700 uppercase text-xs font-bold">
               <tr>
@@ -105,6 +106,50 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View - Hidden on Desktop */}
+        <div className="md:hidden space-y-4">
+          {users.map((user) => (
+            <div 
+              key={user.id} 
+              className={`bg-white border rounded-lg p-4 shadow-sm ${
+                user.hasSubmitted ? 'border-l-4 border-l-green-500 bg-green-50' : 'border-gray-200'
+              }`}
+            >
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <h3 className="font-bold text-base text-black">{user.name}</h3>
+                  <p className="text-sm text-gray-600">{user.department}</p>
+                  {user.hasSubmitted && (
+                    <span className="inline-block mt-1 text-xs bg-green-600 text-white px-2 py-0.5 rounded">✓ Submitted</span>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="bg-gray-50 p-3 rounded border border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">Reviews Received</p>
+                  <p className="text-lg font-bold text-gray-800">{user._count.reviewsReceived}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded border border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">Reviews Written</p>
+                  <p className="text-lg font-bold">
+                    <span className={`px-2 py-1 rounded text-xs ${user._count.reviewsWritten >= 5 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                      {user._count.reviewsWritten} / 5
+                    </span>
+                  </p>
+                </div>
+              </div>
+              
+              <Link 
+                href={`/admin/user/${user.id}`}
+                className="block w-full text-center px-4 py-2 text-blue-600 hover:text-blue-800 font-bold text-sm border border-blue-200 bg-blue-50 rounded hover:bg-blue-100"
+              >
+                Inspect User
+              </Link>
+            </div>
+          ))}
         </div>
       </div>
     </div>

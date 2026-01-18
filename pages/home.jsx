@@ -38,54 +38,58 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#142749]">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#142749] px-4 py-8">
 
       {/* Logo instead of h1 */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <Image
           src={logo}
           alt="SMP IIT Bombay"
-          width={120}
+          width={100}
+          height={100}
+          className="sm:w-[120px] sm:h-[120px]"
           priority
         />
       </div>
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded shadow-md">
-        <h2 className="text-2xl font-bold text-center text-black">
+      <div className="w-full max-w-md p-6 sm:p-8 space-y-6 bg-white rounded-lg shadow-lg">
+        <h2 className="text-xl sm:text-2xl font-bold text-center text-black">
           Peer Review Portal
         </h2>
 
-        {error && <p className="text-red-500 text-center">{error}</p>}
+        {error && <p className="text-red-500 text-center text-sm sm:text-base">{error}</p>}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
           <div>
-            <label className="block text-sm font-medium text-black">
+            <label className="block text-sm font-medium text-black mb-2">
               LDAP Email
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 mt-1 text-black border border-[#c2c9cf] rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+              className="w-full px-3 py-2.5 sm:py-2 text-base sm:text-sm text-black border border-[#c2c9cf] rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="roll.no@iitb.ac.in"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-black">
+            <label className="block text-sm font-medium text-black mb-2">
               Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 mt-1 border border-[#c2c9cf] rounded-md focus:outline-none text-black focus:ring focus:ring-blue-300"
+              className="w-full px-3 py-2.5 sm:py-2 text-base sm:text-sm border border-[#c2c9cf] rounded-md focus:outline-none text-black focus:ring-2 focus:ring-blue-400"
+              placeholder="Enter your password"
               required
             />
           </div>
 
           <button
             type="submit"
-            className="group relative w-full overflow-hidden rounded bg-[#ffc50d] px-4 py-2 text-black"
+            className="group relative w-full overflow-hidden rounded-lg bg-[#ffc50d] px-4 py-3 sm:py-2.5 text-base sm:text-sm font-semibold text-black mt-6"
           >
             <span
               className="absolute inset-0 -translate-x-full bg-black/10

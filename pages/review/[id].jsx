@@ -39,26 +39,26 @@ export default function ReviewPage({ candidate, existingReview }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 text-black">
-      <div className="max-w-md w-full bg-white p-8 rounded shadow border border-gray-200">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 sm:p-6 text-black">
+      <div className="max-w-md w-full bg-white p-6 sm:p-8 rounded-lg shadow-lg border border-gray-200">
         
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-2">
           <div>
-            <h1 className="text-xl font-bold">Reviewing: {candidate.name}</h1>
-            <p className="text-sm text-gray-500">{candidate.department}</p>
+            <h1 className="text-lg sm:text-xl font-bold">Reviewing: {candidate.name}</h1>
+            <p className="text-xs sm:text-sm text-gray-500">{candidate.department}</p>
           </div>
           {existingReview && (
-            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded border border-yellow-200">
+            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded border border-yellow-200 whitespace-nowrap">
               Editing Review
             </span>
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-4">
           {['behavior', 'social', 'academic'].map((field) => (
             <div key={field}>
-              <div className="flex justify-between">
-                <label className="block text-sm font-bold mb-1 capitalize">{field}</label>
+              <div className="flex justify-between mb-2">
+                <label className="block text-sm font-bold capitalize">{field}</label>
                 <span className="text-sm font-mono text-blue-600">{formData[field]}/10</span>
               </div>
               <input
@@ -66,7 +66,7 @@ export default function ReviewPage({ candidate, existingReview }) {
                 min="1" max="10"
                 value={formData[field]}
                 onChange={(e) => setFormData({ ...formData, [field]: parseInt(e.target.value) })}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                className="w-full h-2.5 sm:h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
                 <span>Poor (1)</span>
@@ -75,16 +75,16 @@ export default function ReviewPage({ candidate, existingReview }) {
             </div>
           ))}
           
-          <div className="flex gap-2 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 pt-4">
             <Link 
               href="/candidates"
-              className="w-1/3 bg-gray-200 text-gray-800 py-2 rounded font-bold text-center hover:bg-gray-300"
+              className="w-full sm:w-1/3 bg-gray-200 text-gray-800 py-3 sm:py-2 rounded font-bold text-center hover:bg-gray-300 text-sm sm:text-base"
             >
               Cancel
             </Link>
             <button 
               disabled={loading} 
-              className="w-2/3 bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700"
+              className="w-full sm:w-2/3 bg-blue-600 text-white py-3 sm:py-2 rounded font-bold hover:bg-blue-700 text-sm sm:text-base disabled:opacity-50"
             >
               {loading ? "Saving..." : (existingReview ? "Update Review" : "Submit Review")}
             </button>
