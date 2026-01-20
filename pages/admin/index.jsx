@@ -2,6 +2,8 @@ import { getSession } from "next-auth/react";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { useState } from "react";
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }) {
   const [reviewsEnabled, setReviewsEnabled] = useState(initialEnabled);
@@ -30,14 +32,19 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
   };
 
   return (
-    <div className="min-h-screen bg-white text-black p-4 sm:p-6 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-black">Admin Panel</h1>
-          <Link href="/dashboard" className="text-sm sm:text-base text-blue-600 hover:underline">
-            Back to User Dashboard
-          </Link>
-        </div>
+    <div className="min-h-screen flex flex-col bg-white text-black">
+      <Navbar />
+      <div className="flex-1 p-4 sm:p-6 md:p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold text-black">Admin Panel</h1>
+            <Link 
+              href="/dashboard" 
+              className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 text-sm sm:text-base font-semibold"
+            >
+              ← Back to Dashboard
+            </Link>
+          </div>
 
         {/* Kill Switch */}
         <div className={`mb-6 p-4 sm:p-4 rounded-lg border-2 ${reviewsEnabled ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
@@ -56,7 +63,7 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
               className={`w-full sm:w-auto px-6 py-3 rounded font-bold text-white transition-colors text-sm sm:text-base ${
                 reviewsEnabled 
                   ? 'bg-red-600 hover:bg-red-700' 
-                  : 'bg-green-600 hover:bg-green-700'
+                  : 'bg-[#142749] hover:bg-[#1a3461]'
               } disabled:opacity-50`}
             >
               {isToggling ? "Updating..." : (reviewsEnabled ? "Disable Reviews" : "Enable Reviews")}
@@ -97,7 +104,7 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
                   <td className="p-4 text-center">
                     <Link 
                       href={`/admin/user/${user.id}`}
-                      className="text-blue-600 hover:text-blue-800 font-bold text-sm border border-blue-200 bg-blue-50 px-3 py-1 rounded hover:bg-blue-100"
+                      className="text-white bg-[#142749] hover:bg-[#1a3461] font-bold text-sm border border-[#142749] px-3 py-1 rounded"
                     >
                       Inspect
                     </Link>
@@ -144,7 +151,7 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
               
               <Link 
                 href={`/admin/user/${user.id}`}
-                className="block w-full text-center px-4 py-2 text-blue-600 hover:text-blue-800 font-bold text-sm border border-blue-200 bg-blue-50 rounded hover:bg-blue-100"
+                className="block w-full text-center px-4 py-2 text-white bg-[#142749] hover:bg-[#1a3461] font-bold text-sm border border-[#142749] rounded"
               >
                 Inspect User
               </Link>
@@ -153,6 +160,8 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
         </div>
       </div>
     </div>
+    <Footer />
+  </div>
   );
 }
 

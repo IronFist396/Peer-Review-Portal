@@ -42,12 +42,32 @@ export default async function handler(req, res) {
     // 4. Clean up data and explain WHY they matched
     const formatted = matches.map(user => {
       const matchReasons = [];
-      if (user.department === me.department) matchReasons.push("Same Dept");
-      if (user.hostel === me.hostel) matchReasons.push("Same Hostel");
+      let matchScore = 0; // Track match strength
+      let matchCount = 0; // Number of different types of matches
+      
+      if (user.department === me.department) {
+        matchReasons.push("Same Dept");
+        matchScore += 2;
+        matchCount += 1;
+      }
+      if (user.hostel === me.hostel) {
+        matchReasons.push("Same Hostel");
+        matchScore += 3; // Hostel weighted higher - more likely to know
+        matchCount += 1;
+      }
       
       // Check which PORs overlap
       const commonPors = user.pors.filter(p => me.pors.includes(p));
-      if (commonPors.length > 0) matchReasons.push("Shared POR");
+      if (commonPors.length > 0) {
+        matchReasons.push(`${commonPors.length} Shared POR${commonPors.length > 1 ? 's' : ''}`);
+        matchScore += commonPors.length * 2; // Each POR adds 2 points
+        matchCount += 1;
+      }
+
+      // Boost score if multiple types of matches (compound bonus)
+      if (matchCount > 1) {
+        matchScore += matchCount * 3; // Extra 3 points per additional match type
+      }
 
       return {
         id: user.id,
@@ -55,12 +75,25 @@ export default async function handler(req, res) {
         department: user.department,
         year: user.year,
         hostel: user.hostel,
-        matchTag: matchReasons.join(" • "), // e.g. "Same Dept • Shared POR"
+        matchTag: matchReasons.join(" • "), // e.g. "Same Dept • 2 Shared PORs"
+        matchScore: matchScore, // For sorting
+        matchCount: matchCount, // Number of match types
         hasReviewed: user.reviewsReceived.length > 0
       };
     });
 
-    res.status(200).json(formatted);
+    // 5. Sort by match count first (more types of matches = higher), then score, then name
+    const sorted = formatted.sort((a, b) => {
+      if (b.matchCount !== a.matchCount) {
+        return b.matchCount - a.matchCount; // More match types first
+      }
+      if (b.matchScore !== a.matchScore) {
+        return b.matchScore - a.matchScore; // Higher score first
+      }
+      return a.name.localeCompare(b.name); // Alphabetical if tied
+    });
+
+    res.status(200).json(sorted);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to fetch recommendations" });

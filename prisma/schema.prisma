@@ -34,11 +34,18 @@ model Review {
   id          String   @id @default(cuid())
   createdAt   DateTime @default(now())
   
-  // The Ratings
-  behavior    Int
-  social      Int
-  academic    Int
-  feedback    String?
+  // The Ratings (1-5 star ratings stored as integers 1-5)
+  approachability       Int
+  academicInclination   Int
+  workEthics            Int
+  maturity              Int
+  openMindedness        Int
+  academicEthics        Int
+  
+  // Text responses
+  substanceAbuse        String?  // Paragraph response
+  ismpMentor            String?  // Yes/No/Maybe response
+  otherComments         String?  // Any other comments
 
   // Linking to Users
   reviewer    User     @relation("WrittenReviews", fields: [reviewerId], references: [id])

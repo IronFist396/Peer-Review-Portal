@@ -9,7 +9,18 @@ export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
   if (!session) return res.status(401).json({ message: 'Unauthorized' });
 
-  const { revieweeId, behavior, social, academic } = req.body;
+  const { 
+    revieweeId, 
+    approachability, 
+    academicInclination, 
+    workEthics,
+    maturity,
+    openMindedness,
+    academicEthics,
+    substanceAbuse,
+    ismpMentor,
+    otherComments
+  } = req.body;
 
   try {
     // Check if reviews are enabled
@@ -29,17 +40,29 @@ export default async function handler(req, res) {
       },
       // If found, update these fields
       update: {
-        behavior: parseInt(behavior),
-        social: parseInt(social),
-        academic: parseInt(academic),
+        approachability: parseInt(approachability),
+        academicInclination: parseInt(academicInclination),
+        workEthics: parseInt(workEthics),
+        maturity: parseInt(maturity),
+        openMindedness: parseInt(openMindedness),
+        academicEthics: parseInt(academicEthics),
+        substanceAbuse: substanceAbuse || "",
+        ismpMentor: ismpMentor || "",
+        otherComments: otherComments || "",
       },
       // If NOT found, create a new one
       create: {
         reviewerId: session.user.id,
         revieweeId: revieweeId,
-        behavior: parseInt(behavior),
-        social: parseInt(social),
-        academic: parseInt(academic),
+        approachability: parseInt(approachability),
+        academicInclination: parseInt(academicInclination),
+        workEthics: parseInt(workEthics),
+        maturity: parseInt(maturity),
+        openMindedness: parseInt(openMindedness),
+        academicEthics: parseInt(academicEthics),
+        substanceAbuse: substanceAbuse || "",
+        ismpMentor: ismpMentor || "",
+        otherComments: otherComments || "",
       },
     });
 

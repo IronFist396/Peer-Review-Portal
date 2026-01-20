@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useSession, getSession } from "next-auth/react";
 import { prisma } from "@/lib/prisma";
 import { useRouter } from "next/router";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 export default function CandidatesPage({ hasSubmitted }) {
   const { data: session } = useSession();
@@ -86,14 +88,16 @@ export default function CandidatesPage({ hasSubmitted }) {
   }
 
   return (
-    <div className="min-h-screen bg-white text-black p-4 sm:p-6 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-black">Find Candidates</h1>
-          <Link href="/dashboard" className="text-sm sm:text-base text-blue-600 hover:underline">
-            Back to Dashboard
-          </Link>
-        </div>
+    <div className="min-h-screen flex flex-col bg-white text-black">
+      <Navbar />
+      <div className="flex-1 p-4 sm:p-6 md:p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold text-black">Find Candidates</h1>
+            <Link href="/dashboard" className="text-sm sm:text-base text-[#142749] hover:underline font-medium">
+              ← Back to Dashboard
+            </Link>
+          </div>
 
         {/* Search Input (Only needed for 'All' or 'Reviewed') */}
         <div className="mb-6">
@@ -111,7 +115,7 @@ export default function CandidatesPage({ hasSubmitted }) {
            <button
             onClick={() => setActiveTab("suggested")}
             className={`pb-2 font-medium px-3 sm:px-2 text-sm sm:text-base whitespace-nowrap ${
-              activeTab === "suggested" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500"
+              activeTab === "suggested" ? "border-b-2 border-[#142749] text-[#142749]" : "text-gray-500"
             }`}
           >
             You May Know
@@ -119,7 +123,7 @@ export default function CandidatesPage({ hasSubmitted }) {
           <button
             onClick={() => setActiveTab("all")}
             className={`pb-2 font-medium px-3 sm:px-2 text-sm sm:text-base whitespace-nowrap ${
-              activeTab === "all" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500"
+              activeTab === "all" ? "border-b-2 border-[#142749] text-[#142749]" : "text-gray-500"
             }`}
           >
             All Candidates
@@ -127,7 +131,7 @@ export default function CandidatesPage({ hasSubmitted }) {
           <button
             onClick={() => setActiveTab("reviewed")}
             className={`pb-2 font-medium px-3 sm:px-2 text-sm sm:text-base whitespace-nowrap ${
-              activeTab === "reviewed" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500"
+              activeTab === "reviewed" ? "border-b-2 border-[#142749] text-[#142749]" : "text-gray-500"
             }`}
           >
             Reviewed
@@ -171,7 +175,7 @@ export default function CandidatesPage({ hasSubmitted }) {
               ) : (
                 <Link
                   href={`/review/${user.id}`}
-                  className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium text-center text-sm sm:text-base"
+                  className="w-full sm:w-auto px-4 py-2 bg-[#142749] text-white rounded hover:bg-[#1a3461] font-medium text-center text-sm sm:text-base"
                 >
                   Review
                 </Link>
@@ -181,6 +185,8 @@ export default function CandidatesPage({ hasSubmitted }) {
         </div>
       </div>
     </div>
+    <Footer />
+  </div>
   );
 }
 // Server-side check to prevent access after submission

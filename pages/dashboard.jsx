@@ -2,7 +2,8 @@
 import { getSession } from "next-auth/react";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import LogoutButton from "./logout-button"; // Assuming this is in the same folder
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { useState } from "react";
 
 export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEnabled }) {
@@ -37,12 +38,13 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
   // If user has already submitted, show different UI
   if (user.hasSubmitted) {
     return (
-      <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-green-50 to-blue-50">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Welcome, {user.name}</h1>
-            <LogoutButton />
-          </div>
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-green-50 to-blue-50">
+        <Navbar />
+        <div className="flex-1 p-4 sm:p-6 md:p-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Welcome, {user.name}</h1>
+            </div>
 
           {/* Success Message */}
           <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg mb-6 border-t-4 border-green-500">
@@ -73,7 +75,7 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
               <div className="bg-purple-50 p-4 sm:p-4 rounded border border-purple-200">
                 <p className="text-2xl sm:text-3xl font-bold text-purple-700">
                   {reviewCount > 0 
-                    ? (reviewsWritten.reduce((sum, r) => sum + r.behavior + r.social + r.academic, 0) / (reviewCount * 3)).toFixed(1)
+                    ? (reviewsWritten.reduce((sum, r) => sum + r.approachability + r.academicInclination + r.workEthics + r.maturity + r.openMindedness + r.academicEthics, 0) / (reviewCount * 6)).toFixed(1)
                     : '0'}
                 </p>
                 <p className="text-xs sm:text-sm text-gray-600">Average Rating Given</p>
@@ -96,7 +98,7 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
                     </div>
                     <div className="text-left sm:text-right">
                       <p className="text-xs sm:text-sm font-mono text-gray-600">
-                        Avg: {((review.behavior + review.social + review.academic) / 3).toFixed(1)}/10
+                        Avg: {((review.approachability + review.academicInclination + review.workEthics + review.maturity + review.openMindedness + review.academicEthics) / 6).toFixed(1)}/5
                       </p>
                     </div>
                   </div>
@@ -106,17 +108,20 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
           </div>
         </div>
       </div>
+      <Footer />
+    </div>
     );
   }
 
   // Normal dashboard for users who haven't submitted yet
   return (
-    <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gray-50">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold">Welcome, {user.name}</h1>
-          <LogoutButton />
-        </div>
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <Navbar />
+      <div className="flex-1 p-4 sm:p-6 md:p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold">Welcome, {user.name}</h1>
+          </div>
 
         {/* Progress Bar */}
         <div className="bg-white p-4 sm:p-6 rounded shadow mb-6">
@@ -154,7 +159,7 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
             href="/candidates" 
             className={`px-6 py-3 rounded font-bold text-center ${
               reviewsEnabled 
-                ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                ? 'bg-[#142749] text-white hover:bg-[#1a3461]' 
                 : 'bg-gray-400 text-gray-200 cursor-not-allowed pointer-events-none'
             }`}
           >
@@ -164,10 +169,10 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
           <button 
             disabled={!isCompleted || !reviewsEnabled}
             onClick={() => setShowConfirmModal(true)}
-            className={`px-6 py-3 rounded font-bold text-white text-center ${
+            className={`px-6 py-3 rounded font-bold text-black text-center ${
               (isCompleted && reviewsEnabled) 
-                ? 'bg-green-600 hover:bg-green-700' 
-                : 'bg-gray-400 cursor-not-allowed'
+                ? 'bg-[#ffc10b] hover:bg-[#e6ad09]' 
+                : 'bg-gray-400 text-gray-200 cursor-not-allowed'
             }`}
           >
             Submit Reviews
@@ -176,11 +181,12 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
 
         {user.isAdmin && (
           <div className="mt-6">
-            <Link href="/admin" className="text-sm sm:text-base text-blue-600 hover:underline font-medium">
+            <Link href="/admin" className="text-sm sm:text-base text-[#142749] hover:underline font-medium">
               → Go to Admin Panel
             </Link>
           </div>
         )}
+        </div>
       </div>
 
       {/* Confirmation Modal */}
@@ -207,7 +213,7 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
               <button
                 onClick={handleFinalSubmit}
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded font-medium hover:bg-green-700 disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-[#ffc10b] text-black rounded font-medium hover:bg-[#e6ad09] disabled:opacity-50"
               >
                 {isSubmitting ? "Submitting..." : "Yes, Submit"}
               </button>
@@ -215,6 +221,7 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 }
@@ -274,9 +281,12 @@ export async function getServerSideProps(context) {
 
   const cleanedReviews = reviewsWritten.map(r => ({
     id: r.id,
-    behavior: r.behavior,
-    social: r.social,
-    academic: r.academic,
+    approachability: r.approachability,
+    academicInclination: r.academicInclination,
+    workEthics: r.workEthics,
+    maturity: r.maturity,
+    openMindedness: r.openMindedness,
+    academicEthics: r.academicEthics,
     reviewee: r.reviewee
   }));
 
