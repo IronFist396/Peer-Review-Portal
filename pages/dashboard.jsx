@@ -1,6 +1,7 @@
 // pages/dashboard.jsx
 import { getSession } from "next-auth/react";
 import { prisma } from "@/lib/prisma";
+import Head from "next/head";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -38,7 +39,12 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
   // If user has already submitted, show different UI
   if (user.hasSubmitted) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-green-50 to-blue-50">
+      <>
+        <Head>
+          <title>Dashboard</title>
+          <link rel="icon" href="/logo_dark.svg" />
+        </Head>
+        <div className="min-h-screen flex flex-col bg-gradient-to-br from-green-50 to-blue-50">
         <Navbar />
         <div className="flex-1 p-4 sm:p-6 md:p-8">
           <div className="max-w-4xl mx-auto">
@@ -109,13 +115,19 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
         </div>
       </div>
       <Footer />
-    </div>
+      </div>
+      </>
     );
   }
 
   // Normal dashboard for users who haven't submitted yet
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <>
+      <Head>
+        <title>Dashboard</title>
+        <link rel="icon" href="/" />
+      </Head>
+      <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       <div className="flex-1 p-4 sm:p-6 md:p-8">
         <div className="max-w-4xl mx-auto">
@@ -134,7 +146,7 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
           </div>
           <p className="text-sm sm:text-base text-gray-700">
             {reviewCount} / 5 reviews completed.
-            {!isCompleted && <span className="text-red-600 ml-2">You need {5 - reviewCount} more to submit.</span>}
+            {!isCompleted && <span className="text-red-600 ml-2">You need atleast {5 - reviewCount} more to submit.</span>}
           </p>
         </div>
 
@@ -222,7 +234,8 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
         </div>
       )}
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }
 

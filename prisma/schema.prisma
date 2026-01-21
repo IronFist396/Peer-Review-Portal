@@ -1,64 +1,50 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL") // Vercel provides this automatically
-  directUrl = env("POSTGRES_URL_NON_POOLING") // Vercel provides this automatically
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  password      String
-  name          String?
-  department    String?  // New Field
-  year          Int?     // New Field
-  isAdmin       Boolean  @default(false) // Admin users won't appear in review pool
-  hasSubmitted  Boolean  @default(false) // Whether user has finalized their reviews
-  submittedAt   DateTime? // When they submitted
-  
-  // NEW FIELDS
-  hostel        String?  // e.g., "Hostel 1"
-  pors          String[] // This stores a list: ["Music Club", "Sports Team"]
-  
-  // Relations
-  reviewsWritten Review[] @relation("WrittenReviews")
-  reviewsReceived Review[] @relation("ReceivedReviews")
+  id              String    @id @default(cuid())
+  email           String    @unique
+  password        String
+  name            String?
+  department      String?
+  year            Int?
+  isAdmin         Boolean   @default(false)
+  hostel          String?
+  pors            String[]
+  hasSubmitted    Boolean   @default(false)
+  submittedAt     DateTime?
+  reviewsReceived Review[]  @relation("ReceivedReviews")
+  reviewsWritten  Review[]  @relation("WrittenReviews")
 }
 
 model Review {
-  id          String   @id @default(cuid())
-  createdAt   DateTime @default(now())
-  
-  // The Ratings (1-5 star ratings stored as integers 1-5)
-  approachability       Int
-  academicInclination   Int
-  workEthics            Int
-  maturity              Int
-  openMindedness        Int
-  academicEthics        Int
-  
-  // Text responses
-  substanceAbuse        String?  // Paragraph response
-  ismpMentor            String?  // Yes/No/Maybe response
-  otherComments         String?  // Any other comments
+  id                  String   @id @default(cuid())
+  createdAt           DateTime @default(now())
+  reviewerId          String
+  revieweeId          String
+  academicEthics      Int
+  academicInclination Int
+  approachability     Int
+  ismpMentor          String?
+  maturity            Int
+  openMindedness      Int
+  otherComments       String?
+  substanceAbuse      String?
+  workEthics          Int
+  reviewee            User     @relation("ReceivedReviews", fields: [revieweeId], references: [id])
+  reviewer            User     @relation("WrittenReviews", fields: [reviewerId], references: [id])
 
-  // Linking to Users
-  reviewer    User     @relation("WrittenReviews", fields: [reviewerId], references: [id])
-  reviewerId  String
-
-  reviewee    User     @relation("ReceivedReviews", fields: [revieweeId], references: [id])
-  revieweeId  String
-
-  // Prevent duplicate reviews: A user can review another user only once
   @@unique([reviewerId, revieweeId])
 }
+
 model SystemSettings {
-  id                    String   @id @default(cuid())
-  reviewsEnabled        Boolean  @default(true) // Kill switch for submissions
-  updatedAt             DateTime @updatedAt
+  id             String   @id @default(cuid())
+  reviewsEnabled Boolean  @default(true)
+  updatedAt      DateTime @updatedAt
 }

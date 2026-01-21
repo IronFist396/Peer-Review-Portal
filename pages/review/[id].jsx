@@ -3,6 +3,7 @@ import { getSession } from "next-auth/react";
 import { prisma } from "@/lib/prisma";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import Head from "next/head";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
@@ -128,7 +129,12 @@ export default function ReviewPage({ candidate, existingReview }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <>
+      <Head>
+        <title>Review</title>
+        <link rel="icon" href="/logo_dark.svg" />
+      </Head>
+      <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       <div className="flex-1 p-4 sm:p-6 md:p-8 text-black">
         <div className="max-w-7xl mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-lg border border-gray-200">
@@ -240,7 +246,8 @@ export default function ReviewPage({ candidate, existingReview }) {
       </div>
     </div>
     <Footer />
-  </div>
+    </div>
+  </>
   );
 }
 

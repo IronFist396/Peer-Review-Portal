@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession, getSession } from "next-auth/react";
 import { prisma } from "@/lib/prisma";
 import { useRouter } from "next/router";
+import Head from "next/head";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -88,9 +89,14 @@ export default function CandidatesPage({ hasSubmitted }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-black">
+    <>
+      <Head>
+        <title>Peer Review Portal</title>
+        <link rel="icon" href="/logo_dark.svg" />
+      </Head>
+      <div className="min-h-screen flex flex-col bg-white text-black">
       <Navbar />
-      <div className="flex-1 p-4 sm:p-6 md:p-8">
+      <div className="flex-1 p-6 sm:p-6 md:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <h1 className="text-2xl sm:text-3xl font-bold text-black">Find Candidates</h1>
@@ -186,7 +192,8 @@ export default function CandidatesPage({ hasSubmitted }) {
       </div>
     </div>
     <Footer />
-  </div>
+    </div>
+  </>
   );
 }
 // Server-side check to prevent access after submission

@@ -6,16 +6,14 @@ import { signOut } from "next-auth/react";
 
 export default function Navbar() {
   return (
-    <nav className="bg-[#142749] text-white px-4 sm:px-6 py-4 shadow-lg">
+    <nav className="bg-[#142749] text-white px-4 sm:px-6 py-2 shadow-lg">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         {/* Logo */}
         <Link href="/dashboard" className="flex items-center">
           <Image
             src={logo}
             alt="SMP IIT Bombay"
-            width={60}
-            height={60}
-            className="sm:w-[70px] sm:h-[70px]"
+            className="sm:w-[85px] sm:h-[85px]"
             priority
           />
         </Link>

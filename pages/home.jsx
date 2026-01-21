@@ -2,6 +2,7 @@
 import { signIn, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import Head from "next/head";
 import Image from "next/image";
 import logo from "../public/logo.svg";
 
@@ -38,7 +39,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#142749] px-4 py-8">
+    <>
+      <Head>
+        <title>Login - Peer Review Portal</title>
+        <link rel="icon" href="/logo_dark.svg" />
+      </Head>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#142749] px-4 py-8">
 
       {/* Logo instead of h1 */}
       <div className="mb-6 sm:mb-8">
@@ -100,6 +106,7 @@ export default function LoginPage() {
           </button>
         </form>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

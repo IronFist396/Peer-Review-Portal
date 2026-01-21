@@ -2,6 +2,7 @@ import { getSession } from "next-auth/react";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { useState } from "react";
+import Head from "next/head";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
@@ -32,7 +33,12 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-black">
+    <>
+      <Head>
+        <title>Admin Panel</title>
+        <link rel="icon" href="/logo_dark.svg" />
+      </Head>
+      <div className="min-h-screen flex flex-col bg-white text-black">
       <Navbar />
       <div className="flex-1 p-4 sm:p-6 md:p-8">
         <div className="max-w-6xl mx-auto">
@@ -161,7 +167,8 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
       </div>
     </div>
     <Footer />
-  </div>
+    </div>
+  </>
   );
 }
 
