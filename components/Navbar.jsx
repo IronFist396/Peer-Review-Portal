@@ -13,7 +13,9 @@ export default function Navbar() {
           <Image
             src={logo}
             alt="SMP IIT Bombay"
-            className="sm:w-[85px] sm:h-[85px]"
+            width={48}
+            height={48}
+            className="w-20 sm:w-[85px] sm:h-[85px]"
             priority
           />
         </Link>

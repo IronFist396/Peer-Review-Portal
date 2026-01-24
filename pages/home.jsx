@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { data: session } = useSession();
 
@@ -21,6 +22,8 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError("");
     try {
       const res = await signIn("credentials", {
         redirect: false,
@@ -30,11 +33,13 @@ export default function LoginPage() {
 
       if (res?.error) {
         setError("Invalid credentials");
+        setIsLoading(false);
       } else {
         router.push("/dashboard");
       }
     } catch (err) {
       console.log(err);
+      setIsLoading(false);
     }
   };
 
@@ -95,14 +100,17 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="group relative w-full overflow-hidden rounded-lg bg-[#ffc50d] px-4 py-3 sm:py-2.5 text-base sm:text-sm font-semibold text-black mt-6"
+            disabled={isLoading}
+            className="group relative w-full overflow-hidden rounded-lg bg-[#ffc50d] px-4 py-3 sm:py-2.5 text-base sm:text-sm font-semibold text-black mt-6 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <span
               className="absolute inset-0 -translate-x-full bg-black/10
                          transition-transform duration-200 ease-out
                          group-hover:translate-x-0"
             />
-            <span className="relative z-10 font-medium">Sign In</span>
+            <span className="relative z-10 font-medium">
+              {isLoading ? "Logging in..." : "Sign In"}
+            </span>
           </button>
         </form>
       </div>
