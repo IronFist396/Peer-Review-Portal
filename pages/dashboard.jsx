@@ -181,10 +181,10 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
           <button 
             disabled={!isCompleted || !reviewsEnabled}
             onClick={() => setShowConfirmModal(true)}
-            className={`px-6 py-3 rounded font-bold text-black text-center ${
+            className={`px-6 py-3 rounded font-bold text-center transition-all ${
               (isCompleted && reviewsEnabled) 
-                ? 'bg-[#ffc10b] hover:bg-[#e6ad09]' 
-                : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                ? 'bg-[#ffc10b] hover:bg-[#e6ad09] text-black' 
+                : 'bg-[#ddd5b8] text-[#9a916d] cursor-not-allowed border-2 border-[#c4bd9f]'
             }`}
           >
             Submit Reviews
