@@ -159,10 +159,18 @@ export default function CandidatesPage({ hasSubmitted }) {
               <div className="flex-1">
                 <h3 className="font-bold text-base sm:text-lg text-black">
                   {user.name} 
+                  {/* Show Program Badge */}
+                  <span className={`ml-2 text-xs px-2 py-1 rounded font-normal ${
+                    user.applyingFor === 'ismp' 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-purple-100 text-purple-800'
+                  }`}>
+                    {user.applyingFor?.toUpperCase() || 'ISMP'}
+                  </span>
                   {/* Show Match Reason Badge for Suggested Tab */}
                   {activeTab === "suggested" && user.matchTag && (
-                    <span className="ml-2 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-normal">
-                      Matches: {user.matchTag}
+                    <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-normal">
+                      {user.matchTag}
                     </span>
                   )}
                 </h3>

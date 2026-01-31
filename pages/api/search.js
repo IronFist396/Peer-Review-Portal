@@ -10,11 +10,34 @@ export default async function handler(req, res) {
   const { q } = req.query;
 
   try {
+    // Get current user's program and department
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { applyingFor: true, department: true }
+    });
+
+    // Build filter based on user's program
+    let programFilter = {};
+    
+    if (currentUser.applyingFor === 'ismp') {
+      // ISMP users can see all ISMP applicants (any department)
+      programFilter = { applyingFor: 'ismp' };
+    } else if (currentUser.applyingFor === 'damp') {
+      // DAMP users can only see DAMP applicants from their department
+      programFilter = { 
+        applyingFor: 'damp',
+        department: currentUser.department 
+      };
+    }
+
     const users = await prisma.user.findMany({
       where: {
         AND: [
           { id: { not: session.user.id } }, // Not myself
           { isAdmin: false }, // Exclude all admins from candidate pool
+          { isDeptHead: false }, // Exclude dept heads from candidate pool
+          { acceptingReviews: true }, // Only show users accepting reviews
+          programFilter, // Apply program-based filter
           {
             OR: [
               { name: { contains: q || "", mode: "insensitive" } },
@@ -40,6 +63,7 @@ export default async function handler(req, res) {
       department: u.department,
       year: u.year,
       hostel: u.hostel,
+      applyingFor: u.applyingFor,
       hasReviewed: u.reviewsReceived.length > 0 // true if I reviewed them
     }));
 

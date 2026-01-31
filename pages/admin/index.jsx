@@ -6,9 +6,47 @@ import Head from "next/head";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
-export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }) {
+export default function AdminDashboard({ user, users, reviewsEnabled: initialEnabled }) {
   const [reviewsEnabled, setReviewsEnabled] = useState(initialEnabled);
   const [isToggling, setIsToggling] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedProgram, setSelectedProgram] = useState("");
+
+  // Get unique departments
+  const departments = [...new Set(users.map(u => u.department))].sort();
+
+  // Filter users based on search, department, and program
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         u.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesDepartment = !selectedDepartment || u.department === selectedDepartment;
+    const matchesProgram = !selectedProgram || u.applyingFor === selectedProgram;
+    return matchesSearch && matchesDepartment && matchesProgram;
+  });
+
+  const toggleUserReviews = async (userId, currentStatus) => {
+    try {
+      const res = await fetch('/api/toggle-user-reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId, 
+          acceptingReviews: !currentStatus 
+        })
+      });
+
+      if (res.ok) {
+        // Refresh the page to show updated data
+        window.location.reload();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to update user");
+      }
+    } catch (error) {
+      alert("Something went wrong");
+    }
+  };
 
   const handleToggle = async () => {
     setIsToggling(true);
@@ -43,7 +81,16 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
       <div className="flex-1 p-4 sm:p-6 md:p-8">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-black">Admin Panel</h1>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-black">
+                {user.isDeptHead ? `${user.department} Department Admin` : 'Admin Panel'}
+              </h1>
+              {user.isDeptHead && !user.isAdmin && (
+                <p className="text-sm text-gray-600 mt-1">
+                  Managing DAMP reviews for {user.department}
+                </p>
+              )}
+            </div>
             <Link 
               href="/dashboard" 
               className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 text-sm sm:text-base font-semibold"
@@ -52,7 +99,8 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
             </Link>
           </div>
 
-        {/* Kill Switch */}
+        {/* Kill Switch - Only for Super Admin */}
+        {user.isAdmin && (
         <div className={`mb-6 p-4 sm:p-4 rounded-lg border-2 ${reviewsEnabled ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex-1">
@@ -76,6 +124,46 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
             </button>
           </div>
         </div>
+        )}
+
+        {/* Search and Filter */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name or email..."
+            className="flex-1 border border-gray-300 p-3 rounded-lg bg-white text-sm text-black focus:ring-2 focus:ring-blue-500"
+          />
+          <select
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
+            className="border border-gray-300 p-3 rounded-lg bg-white text-sm text-black focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+          >
+            <option value="">All Departments</option>
+            {departments.map((dept) => (
+              <option key={dept} value={dept}>
+                {dept}
+              </option>
+            ))}
+          </select>
+          {user.isAdmin && (
+            <select
+              value={selectedProgram}
+              onChange={(e) => setSelectedProgram(e.target.value)}
+              className="border border-gray-300 p-3 rounded-lg bg-white text-sm text-black focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+            >
+              <option value="">All Programs</option>
+              <option value="ismp">ISMP</option>
+              <option value="damp">DAMP</option>
+            </select>
+          )}
+        </div>
+
+        {/* Results Count */}
+        <div className="mb-4 text-sm text-gray-600">
+          Showing {filteredUsers.length} of {users.length} users
+        </div>
 
         {/* Desktop Table View - Hidden on Mobile */}
         <div className="hidden md:block bg-white shadow border border-gray-200 rounded-lg overflow-hidden">
@@ -90,7 +178,7 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <tr key={user.id} className={`hover:bg-gray-50 ${user.hasSubmitted ? 'border-l-4 border-l-green-500 bg-green-50' : ''}`}>
                   <td className="p-4 font-medium">
                     {user.name}
@@ -123,7 +211,7 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
 
         {/* Mobile Card View - Hidden on Desktop */}
         <div className="md:hidden space-y-4">
-          {users.map((user) => (
+          {filteredUsers.map((user) => (
             <div 
               key={user.id} 
               className={`bg-white border rounded-lg p-4 shadow-sm ${
@@ -133,9 +221,21 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
                   <h3 className="font-bold text-base text-black">{user.name}</h3>
-                  <p className="text-sm text-gray-600">{user.department}</p>
+                  <p className="text-xs text-gray-600">{user.email}</p>
+                  <div className="flex gap-2 mt-2">
+                    <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded font-medium">
+                      {user.department}
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded font-medium ${
+                      user.applyingFor === 'ismp' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-purple-100 text-purple-800'
+                    }`}>
+                      {user.applyingFor.toUpperCase()}
+                    </span>
+                  </div>
                   {user.hasSubmitted && (
-                    <span className="inline-block mt-1 text-xs bg-green-600 text-white px-2 py-0.5 rounded">✓ Submitted</span>
+                    <span className="inline-block mt-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded">✓ Submitted</span>
                   )}
                 </div>
               </div>
@@ -153,6 +253,19 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
                     </span>
                   </p>
                 </div>
+              </div>
+
+              <div className="mb-3">
+                <button
+                  onClick={() => toggleUserReviews(user.id, user.acceptingReviews)}
+                  className={`w-full px-3 py-2 rounded text-xs font-semibold ${
+                    user.acceptingReviews
+                      ? 'bg-green-100 text-green-800 border border-green-300'
+                      : 'bg-red-100 text-red-800 border border-red-300'
+                  }`}
+                >
+                  {user.acceptingReviews ? '✓ Accepting Reviews' : '✕ Paused'}
+                </button>
               </div>
               
               <Link 
@@ -179,38 +292,76 @@ export async function getServerSideProps(context) {
     return { redirect: { destination: "/dashboard", permanent: false } };
   }
 
-  // 1. Check if the user is an admin
+  // 1. Check if the user is an admin or dept head
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { isAdmin: true }
+    select: { 
+      isAdmin: true, 
+      isDeptHead: true, 
+      department: true 
+    }
   });
 
-  // 2. Security Check: Redirect if not admin
-  if (!user || !user.isAdmin) {
+  // 2. Security Check: Redirect if not admin or dept head
+  if (!user || (!user.isAdmin && !user.isDeptHead)) {
     return { redirect: { destination: "/dashboard", permanent: false } };
   }
 
-  // 3. Get all non-admin users with counts
-  const users = await prisma.user.findMany({
-    where: { isAdmin: false }, // Only show regular users in admin panel
-    select: {
-      id: true,
-      name: true,
-      department: true,
-      email: true,
-      hasSubmitted: true,
-      _count: {
-        select: { reviewsWritten: true, reviewsReceived: true }
-      }
-    },
-    orderBy: { name: 'asc' }
-  });
+  // 3. Get users based on permissions
+  let users;
+  
+  if (user.isAdmin) {
+    // Super admin sees everyone (except admins and dept heads)
+    users = await prisma.user.findMany({
+      where: { 
+        isAdmin: false,
+        isDeptHead: false
+      },
+      select: {
+        id: true,
+        name: true,
+        department: true,
+        email: true,
+        applyingFor: true,
+        acceptingReviews: true,
+        hasSubmitted: true,
+        _count: {
+          select: { reviewsWritten: true, reviewsReceived: true }
+        }
+      },
+      orderBy: { name: 'asc' }
+    });
+  } else if (user.isDeptHead) {
+    // Dept head sees only DAMP users from their department
+    users = await prisma.user.findMany({
+      where: { 
+        applyingFor: 'damp',
+        department: user.department,
+        isDeptHead: false,
+        isAdmin: false
+      },
+      select: {
+        id: true,
+        name: true,
+        department: true,
+        email: true,
+        applyingFor: true,
+        acceptingReviews: true,
+        hasSubmitted: true,
+        _count: {
+          select: { reviewsWritten: true, reviewsReceived: true }
+        }
+      },
+      orderBy: { name: 'asc' }
+    });
+  }
 
   // 4. Get system settings
   const settings = await prisma.systemSettings.findFirst();
 
   return { 
     props: { 
+      user,
       users,
       reviewsEnabled: settings?.reviewsEnabled ?? true 
     } 

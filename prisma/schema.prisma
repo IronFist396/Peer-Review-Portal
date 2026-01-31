@@ -14,6 +14,12 @@ model User {
   name            String?
   department      String?
   year            Int?
+  
+  // Program and permissions
+  applyingFor     String    @default("ismp")  // "ismp" or "damp"
+  acceptingReviews Boolean  @default(true)    // Individual kill switch
+  isDeptHead      Boolean   @default(false)   // Department head for DAMP
+  
   isAdmin         Boolean   @default(false)
   hostel          String?
   pors            String[]
@@ -21,6 +27,13 @@ model User {
   submittedAt     DateTime?
   reviewsReceived Review[]  @relation("ReceivedReviews")
   reviewsWritten  Review[]  @relation("WrittenReviews")
+  
+  @@index([applyingFor])
+  @@index([department])
+  @@index([acceptingReviews])
+  @@index([applyingFor, department])
+  @@index([hostel])
+  @@index([hasSubmitted])
 }
 
 model Review {

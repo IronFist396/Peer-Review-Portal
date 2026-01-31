@@ -3,6 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+// Cache for systemSettings to reduce database queries
+let cachedSettings = null;
+let cacheTime = 0;
+const CACHE_DURATION = 60000; // 1 minute
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -23,10 +28,46 @@ export default async function handler(req, res) {
   } = req.body;
 
   try {
-    // Check if reviews are enabled
-    const settings = await prisma.systemSettings.findFirst();
-    if (settings && !settings.reviewsEnabled) {
+    // Check if reviews are enabled (with caching)
+    const now = Date.now();
+    if (!cachedSettings || now - cacheTime > CACHE_DURATION) {
+      cachedSettings = await prisma.systemSettings.findFirst();
+      cacheTime = now;
+    }
+    
+    if (cachedSettings && !cachedSettings.reviewsEnabled) {
       return res.status(403).json({ message: 'Review submissions are currently disabled' });
+    }
+
+    // Get reviewer and reviewee details
+    const reviewer = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { applyingFor: true, department: true }
+    });
+
+    const reviewee = await prisma.user.findUnique({
+      where: { id: revieweeId },
+      select: { applyingFor: true, department: true, acceptingReviews: true }
+    });
+
+    if (!reviewee) {
+      return res.status(404).json({ message: 'Reviewee not found' });
+    }
+
+    // Check if reviewee is accepting reviews
+    if (!reviewee.acceptingReviews) {
+      return res.status(403).json({ message: 'This user is not currently accepting reviews' });
+    }
+
+    // Validate program compatibility
+    if (reviewer.applyingFor === 'damp' && reviewee.applyingFor === 'damp') {
+      // DAMP can only review same department
+      if (reviewer.department !== reviewee.department) {
+        return res.status(403).json({ message: 'You can only review DAMP applicants from your department' });
+      }
+    } else if (reviewer.applyingFor !== reviewee.applyingFor) {
+      // Can't cross-review between programs
+      return res.status(403).json({ message: 'You can only review applicants from your program' });
     }
 
     // UPSERT: The magic command for "Create or Edit"

@@ -574,14 +574,14 @@ export async function getServerSideProps(context) {
     return { redirect: { destination: "/dashboard", permanent: false } };
   }
 
-  // 1. Check if the user is an admin
-  const adminUser = await prisma.user.findUnique({
+  // 1. Check if the user is an admin or dept head
+  const currentUser = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { isAdmin: true }
+    select: { isAdmin: true, isDeptHead: true, department: true }
   });
 
-  // 2. Security Check: Redirect if not admin
-  if (!adminUser || !adminUser.isAdmin) {
+  // 2. Security Check: Redirect if not admin or dept head
+  if (!currentUser || (!currentUser.isAdmin && !currentUser.isDeptHead)) {
     return { redirect: { destination: "/dashboard", permanent: false } };
   }
 
@@ -598,6 +598,17 @@ export async function getServerSideProps(context) {
       }
     }
   });
+
+  if (!rawUser) {
+    return { redirect: { destination: "/admin", permanent: false } };
+  }
+
+  // Additional check for dept heads: they can only view DAMP users from their department
+  if (currentUser.isDeptHead && !currentUser.isAdmin) {
+    if (rawUser.applyingFor !== 'damp' || rawUser.department !== currentUser.department) {
+      return { redirect: { destination: "/admin", permanent: false } };
+    }
+  }
 
   // THE FIX:
   // 1. JSON.stringify turns everything (including Date objects) into strings.

@@ -48,8 +48,22 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
         <Navbar />
         <div className="flex-1 p-4 sm:p-6 md:p-8">
           <div className="max-w-4xl mx-auto">
-            <div className="mb-6 sm:mb-8">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Welcome, {user.name}</h1>
+            <div className="mb-6 sm:mb-8 flex justify-between items-start">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Welcome, {user.name}</h1>
+                <div className="mt-2">
+                  <span className={`inline-block px-3 py-1 rounded text-sm font-semibold ${
+                    user.applyingFor === 'ismp' 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-purple-100 text-purple-800'
+                  }`}>
+                    {user.applyingFor === 'ismp' ? 'ISMP Candidate' : 'DAMP Candidate'}
+                  </span>
+                  {user.applyingFor === 'damp' && (
+                    <span className="ml-2 text-sm text-gray-600">({user.department})</span>
+                  )}
+                </div>
+              </div>
             </div>
 
           {/* Success Message */}
@@ -131,12 +145,26 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
       <Navbar />
       <div className="flex-1 p-4 sm:p-6 md:p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold">Welcome, {user.name}</h1>
+          <div className="mb-6 sm:mb-8 flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold">Welcome, {user.name}</h1>
+              <div className="mt-2">
+                <span className={`inline-block px-3 py-1 rounded text-sm font-semibold ${
+                  user.applyingFor === 'ismp' 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-purple-100 text-purple-800'
+                }`}>
+                  {user.applyingFor === 'ismp' ? 'ISMP Candidate' : 'DAMP Candidate'}
+                </span>
+                {user.applyingFor === 'damp' && (
+                  <span className="ml-2 text-sm text-gray-600">({user.department})</span>
+                )}
+              </div>
+            </div>
           </div>
 
-        {/* Progress Bar */}
-        <div className="bg-white p-4 sm:p-6 rounded shadow mb-6">
+          {/* Progress Bar */}
+          <div className="bg-white p-4 sm:p-6 rounded shadow mb-6">
           <h2 className="text-lg sm:text-xl font-semibold mb-2">Review Progress</h2>
           <div className="w-full bg-gray-200 rounded-full h-3 sm:h-4 mb-4">
             <div 
@@ -150,23 +178,32 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
           </p>
         </div>
 
-        {/* Reviews Disabled Warning */}
-        {!reviewsEnabled && (
-          <div className="bg-red-50 border-2 border-red-300 p-4 sm:p-6 rounded-lg mb-6">
-            <div className="flex items-start gap-2 sm:gap-3">
-              <span className="text-2xl sm:text-3xl"></span>
-              <div>
-                <h3 className="font-bold text-base sm:text-lg text-red-800 mb-2">Review Submissions Currently Disabled</h3>
-                <p className="text-sm sm:text-base text-red-700">
-                  The review system has been disabled by administrators. You cannot write, edit, or submit reviews at this time. Please check back later. If you think this is an error, contact SMP OCs.
-                </p>
+          {/* Reviews Disabled Warning */}
+          {!reviewsEnabled && (
+            <div className="bg-red-50 border-2 border-red-300 p-4 sm:p-6 rounded-lg mb-6">
+              <div className="flex items-start gap-2 sm:gap-3">
+                <span className="text-2xl sm:text-3xl"></span>
+                <div>
+                  <h3 className="font-bold text-base sm:text-lg text-red-800 mb-2">Review Submissions Currently Disabled</h3>
+                  <p className="text-sm sm:text-base text-red-700">
+                    The review system has been disabled by administrators. You cannot write, edit, or submit reviews at this time. Please check back later. If you think this is an error, contact SMP OCs.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          {(user.isAdmin || user.isDeptHead) && (
+            <Link 
+              href="/admin" 
+              className="px-6 py-3 rounded font-bold text-center bg-gray-800 text-white hover:bg-gray-700"
+            >
+              {user.isDeptHead && !user.isAdmin ? 'Department Admin Panel' : 'Admin Panel'}
+            </Link>
+          )}
+          
           <Link 
             href="/candidates" 
             className={`px-6 py-3 rounded font-bold text-center ${
@@ -191,13 +228,13 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
           </button>
         </div>
 
-        {user.isAdmin && (
-          <div className="mt-6">
-            <Link href="/admin" className="text-sm sm:text-base text-[#142749] hover:underline font-medium">
-              → Go to Admin Panel
-            </Link>
-          </div>
-        )}
+          {user.isAdmin && (
+            <div className="mt-6">
+              <Link href="/admin" className="text-sm sm:text-base text-[#142749] hover:underline font-medium">
+                → Go to Admin Panel
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -257,7 +294,10 @@ export async function getServerSideProps(context) {
       id: true,
       name: true,
       email: true,
+      department: true,
       isAdmin: true,
+      isDeptHead: true,
+      applyingFor: true,
       hasSubmitted: true,
       submittedAt: true,
     }

@@ -29,7 +29,9 @@ async function main() {
       hostel: values[4].trim(),
       pors: values[5].trim().split(',').map(p => p.trim()).filter(p => p), // Split by comma and clean
       isAdmin: values[6].trim().toLowerCase() === 'true',
-      passwordPlain: values[7].trim()
+      applyingFor: values[7].trim().toLowerCase(), // "ismp" or "damp"
+      isDeptHead: values[8].trim().toLowerCase() === 'true',
+      passwordPlain: values[9].trim()
     }
 
     // Hash the password
@@ -44,6 +46,8 @@ async function main() {
         hostel: userData.hostel,
         pors: userData.pors,
         isAdmin: userData.isAdmin,
+        applyingFor: userData.applyingFor,
+        isDeptHead: userData.isDeptHead,
       },
       create: {
         email: userData.email,
@@ -53,11 +57,15 @@ async function main() {
         hostel: userData.hostel,
         pors: userData.pors,
         isAdmin: userData.isAdmin,
+        applyingFor: userData.applyingFor,
+        isDeptHead: userData.isDeptHead,
         password: hashedPassword,
       },
     })
 
-    console.log(`✓ ${userData.isAdmin ? '👑 Admin' : '👤 User'}: ${userData.name} (${userData.email})`)
+    const roleLabel = userData.isAdmin ? '👑 Admin' : userData.isDeptHead ? '🎓 Dept Head' : '👤 User'
+    const programLabel = userData.applyingFor.toUpperCase()
+    console.log(`✓ ${roleLabel} [${programLabel}]: ${userData.name} (${userData.email})`)
   }
 
   console.log("\n✅ Database seeded successfully from CSV!")

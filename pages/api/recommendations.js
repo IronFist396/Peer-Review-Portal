@@ -11,8 +11,22 @@ export default async function handler(req, res) {
     // 1. Get MY profile details
     const me = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { department: true, hostel: true, pors: true }
+      select: { department: true, hostel: true, pors: true, applyingFor: true }
     });
+
+    // Build program filter
+    let programFilter = {};
+    
+    if (me.applyingFor === 'ismp') {
+      // ISMP users can see all ISMP applicants
+      programFilter = { applyingFor: 'ismp' };
+    } else if (me.applyingFor === 'damp') {
+      // DAMP users can only see DAMP applicants from their department
+      programFilter = { 
+        applyingFor: 'damp',
+        department: me.department 
+      };
+    }
 
     // 2. Find matches
     const matches = await prisma.user.findMany({
@@ -20,6 +34,9 @@ export default async function handler(req, res) {
         AND: [
           { id: { not: session.user.id } }, // Not myself
           { isAdmin: false }, // Exclude all admins from recommendations
+          { isDeptHead: false }, // Exclude dept heads
+          { acceptingReviews: true }, // Only accepting reviews
+          programFilter, // Apply program filter
           {
             OR: [
               { department: me.department },       // Same Dept
@@ -75,6 +92,7 @@ export default async function handler(req, res) {
         department: user.department,
         year: user.year,
         hostel: user.hostel,
+        applyingFor: user.applyingFor,
         matchTag: matchReasons.join(" • "), // e.g. "Same Dept • 2 Shared PORs"
         matchScore: matchScore, // For sorting
         matchCount: matchCount, // Number of match types
