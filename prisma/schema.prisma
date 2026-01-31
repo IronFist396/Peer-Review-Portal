@@ -21,6 +21,10 @@ model User {
   submittedAt     DateTime?
   reviewsReceived Review[]  @relation("ReceivedReviews")
   reviewsWritten  Review[]  @relation("WrittenReviews")
+  
+  @@index([department])
+  @@index([hostel])
+  @@index([hasSubmitted])
 }
 
 model Review {

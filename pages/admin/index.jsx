@@ -9,6 +9,19 @@ import Footer from "../../components/Footer";
 export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }) {
   const [reviewsEnabled, setReviewsEnabled] = useState(initialEnabled);
   const [isToggling, setIsToggling] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+
+  // Get unique departments
+  const departments = [...new Set(users.map(u => u.department))].sort();
+
+  // Filter users based on search and department
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         u.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesDepartment = !selectedDepartment || u.department === selectedDepartment;
+    return matchesSearch && matchesDepartment;
+  });
 
   const handleToggle = async () => {
     setIsToggling(true);
@@ -52,6 +65,27 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
             </Link>
           </div>
 
+        {/* Search and Filters */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 border border-gray-300 p-3 rounded-lg bg-white text-sm text-black focus:ring-2 focus:ring-blue-500"
+          />
+          <select
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
+            className="border border-gray-300 p-3 rounded-lg bg-white text-sm text-black focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+          >
+            <option value="">All Departments</option>
+            {departments.map(dept => (
+              <option key={dept} value={dept}>{dept}</option>
+            ))}
+          </select>
+        </div>
+
         {/* Kill Switch */}
         <div className={`mb-6 p-4 sm:p-4 rounded-lg border-2 ${reviewsEnabled ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -90,7 +124,7 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <tr key={user.id} className={`hover:bg-gray-50 ${user.hasSubmitted ? 'border-l-4 border-l-green-500 bg-green-50' : ''}`}>
                   <td className="p-4 font-medium">
                     {user.name}
@@ -123,7 +157,7 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
 
         {/* Mobile Card View - Hidden on Desktop */}
         <div className="md:hidden space-y-4">
-          {users.map((user) => (
+          {filteredUsers.map((user) => (
             <div 
               key={user.id} 
               className={`bg-white border rounded-lg p-4 shadow-sm ${
