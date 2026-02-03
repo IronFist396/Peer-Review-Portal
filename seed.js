@@ -8,7 +8,7 @@ const prisma = new PrismaClient()
 
 async function main() {
   // Read CSV file
-  const csvPath = path.join(__dirname, 'users.csv')
+  const csvPath = path.join(__dirname, 'users-clean.csv')
   const csvContent = fs.readFileSync(csvPath, 'utf-8')
   
   // Parse CSV
