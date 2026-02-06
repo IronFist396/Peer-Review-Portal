@@ -7,6 +7,8 @@ export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
   if (!session) return res.status(401).json({ error: "Unauthorized" });
 
+  const { skip = 0, take = 20 } = req.query;
+
   try {
     // 1. Get MY profile details
     const me = await prisma.user.findUnique({
@@ -36,7 +38,8 @@ export default async function handler(req, res) {
           select: { id: true }
         }
       },
-      take: 20 // Limit to 20 suggestions
+      skip: parseInt(skip),
+      take: parseInt(take) + 1, // Fetch 1 extra to check if more exist
     });
 
     // 4. Clean up data and explain WHY they matched
@@ -93,7 +96,13 @@ export default async function handler(req, res) {
       return a.name.localeCompare(b.name); // Alphabetical if tied
     });
 
-    res.status(200).json(sorted);
+    const hasMore = sorted.length > parseInt(req.query.take);
+    const returnUsers = hasMore ? sorted.slice(0, -1) : sorted;
+
+    res.status(200).json({
+      users: returnUsers,
+      hasMore
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to fetch recommendations" });

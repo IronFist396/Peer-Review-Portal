@@ -25,6 +25,12 @@ export default function CandidatesPage({ hasSubmitted }) {
   
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [skip, setSkip] = useState(0);
+  const [recSkip, setRecSkip] = useState(0); // Separate skip for recommendations
+  const [recHasMore, setRecHasMore] = useState(true);
+  const ITEMS_PER_PAGE = 20;
   
   // Tabs: 'suggested', 'all', 'reviewed'
   const [activeTab, setActiveTab] = useState("suggested");
@@ -32,48 +38,103 @@ export default function CandidatesPage({ hasSubmitted }) {
   // 1. Fetch Recommendations on Load
   useEffect(() => {
     if (session) {
-      fetch('/api/recommendations')
+      fetch(`/api/recommendations?skip=0&take=${ITEMS_PER_PAGE}`)
         .then(res => res.json())
         .then(data => {
-          // Ensure data is an array
-          if (Array.isArray(data)) {
-            setRecommendations(data);
+          if (data.users && Array.isArray(data.users)) {
+            setRecommendations(data.users);
+            setRecHasMore(data.hasMore);
           } else {
             console.error('Recommendations API error:', data);
             setRecommendations([]);
+            setRecHasMore(false);
           }
         })
         .catch(err => {
           console.error('Failed to fetch recommendations:', err);
           setRecommendations([]);
+          setRecHasMore(false);
         });
     }
   }, [session]);
 
-  // 2. Fetch Search Results (Debounced)
+  // 2. Fetch Search Results (Debounced) - Reset on query change
   useEffect(() => {
+    setSkip(0);
+    setCandidates([]);
+    setHasMore(true);
+    
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/search?q=${query}`);
+        const res = await fetch(`/api/search?q=${query}&skip=0&take=${ITEMS_PER_PAGE}`);
         const data = await res.json();
-        // Ensure data is an array
-        if (Array.isArray(data)) {
-          setCandidates(data);
+        
+        if (data.users && Array.isArray(data.users)) {
+          setCandidates(data.users);
+          setHasMore(data.hasMore);
         } else {
           console.error('Search API error:', data);
           setCandidates([]);
+          setHasMore(false);
         }
       } catch (e) { 
         console.error(e); 
         setCandidates([]);
+        setHasMore(false);
       } 
       finally { setLoading(false); }
     }, 300);
     return () => clearTimeout(timer);
   }, [query]);
 
-  // 3. Decide what list to show based on Tab
+  // 3. Load More Function for Search/All tab
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    
+    setLoadingMore(true);
+    const newSkip = skip + ITEMS_PER_PAGE;
+    
+    try {
+      const res = await fetch(`/api/search?q=${query}&skip=${newSkip}&take=${ITEMS_PER_PAGE}`);
+      const data = await res.json();
+      
+      if (data.users && Array.isArray(data.users)) {
+        setCandidates(prev => [...prev, ...data.users]);
+        setSkip(newSkip);
+        setHasMore(data.hasMore);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Load More for Recommendations
+  const loadMoreRecommendations = async () => {
+    if (loadingMore || !recHasMore) return;
+    
+    setLoadingMore(true);
+    const newSkip = recSkip + ITEMS_PER_PAGE;
+    
+    try {
+      const res = await fetch(`/api/recommendations?skip=${newSkip}&take=${ITEMS_PER_PAGE}`);
+      const data = await res.json();
+      
+      if (data.users && Array.isArray(data.users)) {
+        setRecommendations(prev => [...prev, ...data.users]);
+        setRecSkip(newSkip);
+        setRecHasMore(data.hasMore);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // 4. Decide what list to show based on Tab
   let displayedList = [];
   
   if (activeTab === "suggested") {
@@ -188,6 +249,31 @@ export default function CandidatesPage({ hasSubmitted }) {
               )}
             </div>
           ))}
+
+          {/* Load More Button - Different logic for each tab */}
+          {activeTab === "suggested" && recHasMore && displayedList.length > 0 && (
+            <div className="text-center py-4">
+              <button
+                onClick={loadMoreRecommendations}
+                disabled={loadingMore}
+                className="px-6 py-3 bg-[#142749] text-white rounded-lg hover:bg-[#1a3461] font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {loadingMore ? 'Loading...' : 'Load More'}
+              </button>
+            </div>
+          )}
+          
+          {(activeTab === "all" || activeTab === "reviewed") && hasMore && displayedList.length > 0 && (
+            <div className="text-center py-4">
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="px-6 py-3 bg-[#142749] text-white rounded-lg hover:bg-[#1a3461] font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {loadingMore ? 'Loading...' : 'Load More'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+const { logger } = require("@/lib/logger");
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -30,7 +31,7 @@ export default async function handler(req, res) {
     }
 
     // UPSERT: The magic command for "Create or Edit"
-    await prisma.review.upsert({
+    const result = await prisma.review.upsert({
       where: {
         // We look for a unique combo of YOU (reviewer) and THEM (reviewee)
         reviewerId_revieweeId: {
@@ -66,8 +67,18 @@ export default async function handler(req, res) {
       },
     });
 
+    logger.userAction('SUBMIT_REVIEW', session.user.id, session.user.email, {
+      revieweeId,
+      action: result ? 'update' : 'create',
+      ratings: { approachability, academicInclination, workEthics, maturity, openMindedness, academicEthics }
+    });
+
     return res.status(200).json({ message: 'Success' });
   } catch (error) {
+    logger.error('REVIEW_API', 'Review submission failed', error, {
+      userId: session.user.id,
+      revieweeId
+    });
     console.error(error);
     return res.status(500).json({ message: 'Database error' });
   }

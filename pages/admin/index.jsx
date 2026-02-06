@@ -1,27 +1,85 @@
 import { getSession } from "next-auth/react";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Head from "next/head";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
-export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }) {
+export default function AdminDashboard({ allDepartments, totalCount, reviewsEnabled: initialEnabled }) {
   const [reviewsEnabled, setReviewsEnabled] = useState(initialEnabled);
   const [isToggling, setIsToggling] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [skip, setSkip] = useState(0);
+  const ITEMS_PER_PAGE = 50;
 
-  // Get unique departments
-  const departments = [...new Set(users.map(u => u.department))].sort();
+  // Fetch users whenever search/filter changes
+  useEffect(() => {
+    setSkip(0);
+    setUsers([]);
+    setHasMore(true);
+    
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          skip: 0,
+          take: ITEMS_PER_PAGE,
+          search: searchQuery,
+          department: selectedDepartment
+        });
+        
+        const res = await fetch(`/api/admin/users?${params}`);
+        const data = await res.json();
+        
+        if (data.users && Array.isArray(data.users)) {
+          setUsers(data.users);
+          setHasMore(data.hasMore);
+        }
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+      } finally {
+        setLoading(false);
+      }
+    }, 300); // Debounce search
+    
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedDepartment]);
 
-  // Filter users based on search and department
-  const filteredUsers = users.filter(u => {
-    const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         u.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDepartment = !selectedDepartment || u.department === selectedDepartment;
-    return matchesSearch && matchesDepartment;
-  });
+  // Load more users with current filters
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    
+    setLoadingMore(true);
+    const newSkip = skip + ITEMS_PER_PAGE;
+    
+    try {
+      const params = new URLSearchParams({
+        skip: newSkip,
+        take: ITEMS_PER_PAGE,
+        search: searchQuery,
+        department: selectedDepartment
+      });
+      
+      const res = await fetch(`/api/admin/users?${params}`);
+      const data = await res.json();
+      
+      if (data.users && Array.isArray(data.users)) {
+        setUsers(prev => [...prev, ...data.users]);
+        setSkip(newSkip);
+        setHasMore(data.hasMore);
+      }
+    } catch (error) {
+      console.error('Failed to load more users:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const handleToggle = async () => {
     setIsToggling(true);
@@ -57,12 +115,20 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
             <h1 className="text-2xl sm:text-3xl font-bold text-black">Admin Panel</h1>
-            <Link 
-              href="/dashboard" 
-              className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 text-sm sm:text-base font-semibold"
-            >
-              ← Back to Dashboard
-            </Link>
+            <div className="flex gap-3">
+              <Link 
+                href="/admin/logs" 
+                className="bg-[#142749] text-white px-4 py-2 rounded hover:bg-[#1a3461] text-sm sm:text-base font-semibold"
+              >
+                📋 View Logs
+              </Link>
+              <Link 
+                href="/dashboard" 
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 text-sm sm:text-base font-semibold"
+              >
+                ← Back to Dashboard
+              </Link>
+            </div>
           </div>
 
         {/* Search and Filters */}
@@ -80,7 +146,7 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
             className="border border-gray-300 p-3 rounded-lg bg-white text-sm text-black focus:ring-2 focus:ring-blue-500 min-w-[200px]"
           >
             <option value="">All Departments</option>
-            {departments.map(dept => (
+            {allDepartments.map(dept => (
               <option key={dept} value={dept}>{dept}</option>
             ))}
           </select>
@@ -124,7 +190,16 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
+              {loading && users.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-gray-500">Loading...</td>
+                </tr>
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-gray-500">No users found</td>
+                </tr>
+              ) : (
+                users.map((user) => (
                 <tr key={user.id} className={`hover:bg-gray-50 ${user.hasSubmitted ? 'border-l-4 border-l-green-500 bg-green-50' : ''}`}>
                   <td className="p-4 font-medium">
                     {user.name}
@@ -150,14 +225,19 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
                     </Link>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
 
         {/* Mobile Card View - Hidden on Desktop */}
         <div className="md:hidden space-y-4">
-          {filteredUsers.map((user) => (
+          {loading && users.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">Loading...</p>
+          ) : users.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">No users found</p>
+          ) : (
+            users.map((user) => (
             <div 
               key={user.id} 
               className={`bg-white border rounded-lg p-4 shadow-sm ${
@@ -196,8 +276,21 @@ export default function AdminDashboard({ users, reviewsEnabled: initialEnabled }
                 Inspect User
               </Link>
             </div>
-          ))}
+          )))}
         </div>
+
+        {/* Load More Button */}
+        {hasMore && users.length > 0 && (
+          <div className="text-center py-6">
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="px-6 py-3 bg-[#142749] text-white rounded-lg hover:bg-[#1a3461] font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {loadingMore ? 'Loading...' : 'Load More'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
     <Footer />
@@ -224,28 +317,27 @@ export async function getServerSideProps(context) {
     return { redirect: { destination: "/dashboard", permanent: false } };
   }
 
-  // 3. Get all non-admin users with counts
-  const users = await prisma.user.findMany({
-    where: { isAdmin: false }, // Only show regular users in admin panel
-    select: {
-      id: true,
-      name: true,
-      department: true,
-      email: true,
-      hasSubmitted: true,
-      _count: {
-        select: { reviewsWritten: true, reviewsReceived: true }
-      }
-    },
-    orderBy: { name: 'asc' }
+  // 3. Get all unique departments (for dropdown)
+  const allUsers = await prisma.user.findMany({
+    where: { isAdmin: false },
+    select: { department: true },
+    distinct: ['department']
+  });
+  
+  const allDepartments = allUsers.map(u => u.department).filter(Boolean).sort();
+
+  // 4. Get total count
+  const totalCount = await prisma.user.count({
+    where: { isAdmin: false }
   });
 
-  // 4. Get system settings
+  // 5. Get system settings
   const settings = await prisma.systemSettings.findFirst();
 
   return { 
     props: { 
-      users,
+      allDepartments,
+      totalCount,
       reviewsEnabled: settings?.reviewsEnabled ?? true 
     } 
   };

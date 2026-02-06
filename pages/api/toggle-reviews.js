@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+const { logger } = require("@/lib/logger");
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -40,11 +41,19 @@ export default async function handler(req, res) {
       });
     }
 
+    logger.userAction('ADMIN_TOGGLE_REVIEWS', session.user.id, session.user.email, {
+      action: enabled ? 'enabled' : 'disabled',
+      previousState: settings ? !enabled : undefined
+    });
+
     res.status(200).json({ 
       success: true, 
       reviewsEnabled: settings.reviewsEnabled 
     });
   } catch (error) {
+    logger.error('TOGGLE_REVIEWS_API', 'Failed to toggle reviews', error, {
+      userId: session.user.id
+    });
     console.error(error);
     res.status(500).json({ error: "Failed to update settings" });
   }
