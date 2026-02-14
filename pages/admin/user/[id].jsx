@@ -1,4 +1,5 @@
-import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import Navbar from "../../../components/Navbar";
@@ -568,7 +569,7 @@ export default function AdminUserDetail({ user }) {
 }
 
 export async function getServerSideProps(context) {
-  const session = await getSession(context);
+  const session = await getServerSession(context.req, context.res, authOptions);
 
   if (!session) {
     return { redirect: { destination: "/dashboard", permanent: false } };

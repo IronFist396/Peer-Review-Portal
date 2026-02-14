@@ -22,7 +22,7 @@ export default function Navbar() {
 
         {/* Logout Button */}
         <button
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={() => signOut({ callbackUrl: "/portal" })}
           className="bg-[#ffc10b] text-black px-4 sm:px-6 py-2 rounded-lg font-semibold hover:bg-[#e6ad09] transition-colors text-sm sm:text-base"
         >
           Logout

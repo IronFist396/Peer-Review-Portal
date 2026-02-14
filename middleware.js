@@ -3,17 +3,22 @@ import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 
 export async function middleware(req) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  // Force secure: true so it looks for __Secure-next-auth.session-token
+  const token = await getToken({ 
+    req, 
+    secret: process.env.NEXTAUTH_SECRET,
+    secureCookie: true 
+  });
   
+  // Note: req.nextUrl.pathname does NOT include the basePath (/portal)
+  // so these checks are correct for /portal/home and /portal/dashboard
   const isLoginPage = req.nextUrl.pathname === "/" || req.nextUrl.pathname === "/home";
   const isDashboard = req.nextUrl.pathname === "/dashboard";
   
-  // 1. If user is NOT logged in and tries to access dashboard
   if (!token && isDashboard) {
     return NextResponse.redirect(new URL("/home", req.url));
   }
 
-  // 2. If user IS logged in and tries to access the login page
   if (token && isLoginPage) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }

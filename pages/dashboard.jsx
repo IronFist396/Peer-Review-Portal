@@ -1,5 +1,6 @@
 // pages/dashboard.jsx
-import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth/next"; // <--- CHANGED: Server-side session
+import { authOptions } from "@/lib/auth";          // <--- ADDED: Your auth config
 import { prisma } from "@/lib/prisma";
 import Head from "next/head";
 import Link from "next/link";
@@ -8,6 +9,9 @@ import Footer from "../components/Footer";
 import { useState } from "react";
 
 export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEnabled }) {
+  // =========================================================================
+  //  UI CODE (EXACTLY AS YOU PROVIDED)
+  // =========================================================================
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -239,18 +243,20 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
   );
 }
 
-// Backend Logic
+// =========================================================================
+//  SERVER SIDE LOGIC (FIXED FOR 500 ERROR)
+// =========================================================================
 export async function getServerSideProps(context) {
-  const session = await getSession(context);
+  // FIX 1: Use getServerSession (Server-side) instead of getSession (Client/API side)
+  // This prevents the redirect loop and connection errors.
+  const session = await getServerSession(context.req, context.res, authOptions);
 
-  // Secure the page server-side
   if (!session) {
     return {
-      redirect: { destination: "/", permanent: false },
+      redirect: { destination: "/home", permanent: false },
     };
   }
 
-  // Get user details including submission status
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
@@ -263,17 +269,14 @@ export async function getServerSideProps(context) {
     }
   });
 
-  // If user not found, redirect to login
   if (!user) {
-    return { redirect: { destination: "/", permanent: false } };
+    return { redirect: { destination: "/home", permanent: false } };
   }
 
-  // Count reviews
   const reviewCount = await prisma.review.count({
     where: { reviewerId: session.user.id },
   });
 
-  // Get all reviews written by this user (for summary)
   const reviewsWritten = await prisma.review.findMany({
     where: { reviewerId: session.user.id },
     include: {
@@ -284,15 +287,21 @@ export async function getServerSideProps(context) {
     orderBy: { createdAt: 'desc' }
   });
 
-  // Clean up data for Next.js serialization
-  const cleanedUser = {
+  const settings = await prisma.systemSettings.findFirst();
+
+  // FIX 2: Data Serialization
+  // We use JSON.parse(JSON.stringify(...)) to strip out any complex Date objects
+  // coming from Prisma. This is the safest way to prevent 500 errors regarding serialization.
+  // We apply this to the cleaned reviews and user data.
+
+  const safeUser = JSON.parse(JSON.stringify({
     ...user,
     submittedAt: user.submittedAt 
       ? new Date(user.submittedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
       : null
-  };
+  }));
 
-  const cleanedReviews = reviewsWritten.map(r => ({
+  const safeReviews = JSON.parse(JSON.stringify(reviewsWritten.map(r => ({
     id: r.id,
     approachability: r.approachability,
     academicInclination: r.academicInclination,
@@ -301,16 +310,13 @@ export async function getServerSideProps(context) {
     openMindedness: r.openMindedness,
     academicEthics: r.academicEthics,
     reviewee: r.reviewee
-  }));
-
-  // Get system settings
-  const settings = await prisma.systemSettings.findFirst();
+  }))));
 
   return {
     props: {
-      user: cleanedUser,
+      user: safeUser,
       reviewCount,
-      reviewsWritten: cleanedReviews,
+      reviewsWritten: safeReviews,
       reviewsEnabled: settings?.reviewsEnabled ?? true,
     },
   };

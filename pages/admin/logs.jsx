@@ -1,5 +1,6 @@
 // pages/admin/logs.jsx
-import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { useState, useEffect } from "react";
 import Head from "next/head";
@@ -17,7 +18,7 @@ export default function LogsPage() {
   const fetchLogs = async () => {
     try {
       setError(null);
-      const res = await fetch(`/api/admin/logs?type=${logType}&limit=200`);
+      const res = await fetch(`/portal/api/admin/logs?type=${logType}&limit=200`);
       
       if (!res.ok) {
         throw new Error(`Failed to fetch logs: ${res.status}`);
@@ -209,7 +210,7 @@ export default function LogsPage() {
 }
 
 export async function getServerSideProps(context) {
-  const session = await getSession(context);
+  const session = await getServerSession(req, res, authOptions);
 
   if (!session) {
     return { redirect: { destination: "/", permanent: false } };

@@ -1,7 +1,11 @@
 // pages/candidates.jsx
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSession, getSession } from "next-auth/react";
+import { useSession} from "next-auth/react";
+
+import { getServerSession } from "next-auth/next"; 
+import { authOptions } from "@/lib/auth";
+
 import { prisma } from "@/lib/prisma";
 import { useRouter } from "next/router";
 import Head from "next/head";
@@ -38,7 +42,7 @@ export default function CandidatesPage({ hasSubmitted }) {
   // 1. Fetch Recommendations on Load
   useEffect(() => {
     if (session) {
-      fetch(`/api/recommendations?skip=0&take=${ITEMS_PER_PAGE}`)
+      fetch(`/portal/api/recommendations?skip=0&take=${ITEMS_PER_PAGE}`)
         .then(res => res.json())
         .then(data => {
           if (data.users && Array.isArray(data.users)) {
@@ -67,7 +71,7 @@ export default function CandidatesPage({ hasSubmitted }) {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/search?q=${query}&skip=0&take=${ITEMS_PER_PAGE}`);
+        const res = await fetch(`/portal/api/search?q=${query}&skip=0&take=${ITEMS_PER_PAGE}`);
         const data = await res.json();
         
         if (data.users && Array.isArray(data.users)) {
@@ -96,7 +100,7 @@ export default function CandidatesPage({ hasSubmitted }) {
     const newSkip = skip + ITEMS_PER_PAGE;
     
     try {
-      const res = await fetch(`/api/search?q=${query}&skip=${newSkip}&take=${ITEMS_PER_PAGE}`);
+      const res = await fetch(`/portal/api/search?q=${query}&skip=${newSkip}&take=${ITEMS_PER_PAGE}`);
       const data = await res.json();
       
       if (data.users && Array.isArray(data.users)) {
@@ -119,7 +123,7 @@ export default function CandidatesPage({ hasSubmitted }) {
     const newSkip = recSkip + ITEMS_PER_PAGE;
     
     try {
-      const res = await fetch(`/api/recommendations?skip=${newSkip}&take=${ITEMS_PER_PAGE}`);
+      const res = await fetch(`/portal/api/recommendations?skip=${newSkip}&take=${ITEMS_PER_PAGE}`);
       const data = await res.json();
       
       if (data.users && Array.isArray(data.users)) {
@@ -283,31 +287,32 @@ export default function CandidatesPage({ hasSubmitted }) {
   );
 }
 // Server-side check to prevent access after submission
+
 export async function getServerSideProps(context) {
-  const session = await getSession(context);
+  // 1. Validate Session
+  const session = await getServerSession(context.req, context.res, authOptions);
 
   if (!session) {
-    return { redirect: { destination: "/", permanent: false } };
+    return { redirect: { destination: "/home", permanent: false } };
   }
 
-  // Check if user has submitted
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { hasSubmitted: true }
+  });
+  
+  // 2. Fetch Candidates (Example logic)
+  const candidates = await prisma.user.findMany({
+    where: {
+      NOT: { id: session.user.id }, // Don't show self
+      // Add your department logic here if needed
+    },
+    select: { id: true, name: true, department: true }
   });
 
-  // Redirect to dashboard if already submitted
-  if (user?.hasSubmitted) {
-    return { redirect: { destination: "/dashboard", permanent: false } };
-  }
-
-  // Check if reviews are enabled
-  const settings = await prisma.systemSettings.findFirst();
-  if (settings && !settings.reviewsEnabled) {
-    return { redirect: { destination: "/dashboard", permanent: false } };
-  }
-
   return {
-    props: { hasSubmitted: false }
+    props: {
+      user: JSON.parse(JSON.stringify(user)),
+      candidates: JSON.parse(JSON.stringify(candidates)),
+    },
   };
 }

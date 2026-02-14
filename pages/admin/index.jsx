@@ -1,4 +1,5 @@
-import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -34,7 +35,7 @@ export default function AdminDashboard({ allDepartments, totalCount, reviewsEnab
           department: selectedDepartment
         });
         
-        const res = await fetch(`/api/admin/users?${params}`);
+        const res = await fetch(`/portal/api/admin/users?${params}`);
         const data = await res.json();
         
         if (data.users && Array.isArray(data.users)) {
@@ -66,7 +67,7 @@ export default function AdminDashboard({ allDepartments, totalCount, reviewsEnab
         department: selectedDepartment
       });
       
-      const res = await fetch(`/api/admin/users?${params}`);
+      const res = await fetch(`/portal/api/admin/users?${params}`);
       const data = await res.json();
       
       if (data.users && Array.isArray(data.users)) {
@@ -84,7 +85,7 @@ export default function AdminDashboard({ allDepartments, totalCount, reviewsEnab
   const handleToggle = async () => {
     setIsToggling(true);
     try {
-      const res = await fetch('/api/toggle-reviews', {
+      const res = await fetch('/portal/api/toggle-reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled: !reviewsEnabled })
@@ -300,7 +301,7 @@ export default function AdminDashboard({ allDepartments, totalCount, reviewsEnab
 }
 
 export async function getServerSideProps(context) {
-  const session = await getSession(context);
+  const session = await getServerSession(context.req, context.res, authOptions);
 
   if (!session) {
     return { redirect: { destination: "/dashboard", permanent: false } };

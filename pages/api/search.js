@@ -1,5 +1,5 @@
 // pages/api/search.js
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 const { logger } = require("@/lib/logger");

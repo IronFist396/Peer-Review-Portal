@@ -1,5 +1,6 @@
 // pages/review/[id].jsx
-import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -111,7 +112,7 @@ export default function ReviewPage({ candidate, existingReview }) {
 
     setLoading(true);
 
-    const res = await fetch('/api/submit-review', {
+    const res = await fetch('/portal/api/submit-review', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -253,7 +254,7 @@ export default function ReviewPage({ candidate, existingReview }) {
 
 // Backend Logic
 export async function getServerSideProps(context) {
-  const session = await getSession(context);
+  const session = await getServerSession(context.req, context.res, authOptions);
   if (!session) return { redirect: { destination: "/", permanent: false } };
 
   // Check if user has already submitted their reviews
