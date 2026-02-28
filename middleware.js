@@ -12,7 +12,7 @@ export async function middleware(req) {
   
   // Note: req.nextUrl.pathname does NOT include the basePath (/portal)
   // so these checks are correct for /portal/home and /portal/dashboard
-  const isLoginPage = req.nextUrl.pathname === "/" || req.nextUrl.pathname === "/home";
+  const isLoginPage = req.nextUrl.pathname === "/home";
   const isDashboard = req.nextUrl.pathname === "/dashboard";
   
   if (!token && isDashboard) {
