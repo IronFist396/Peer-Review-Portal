@@ -11,8 +11,12 @@ export default async function handler(req, res) {
   const { q, skip = 0, take = 20, reviewed } = req.query;
 
   try {
-    // Debug: log session.user.id to verify it's not undefined
-    console.log('[search.js] session.user.id:', session.user.id, '| reviewed param:', reviewed);
+    logger.userAction('SEARCH', session.user.id, session.user.email, {
+      query: q || 'all',
+      skip: parseInt(skip),
+      take: parseInt(take),
+      reviewed: reviewed === 'true'
+    });
 
     // Build WHERE clause depending on whether we want reviewed or unreviewed
     const reviewedFilter = reviewed === 'true'

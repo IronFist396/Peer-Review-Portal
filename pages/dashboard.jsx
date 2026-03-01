@@ -22,7 +22,7 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
     setIsSubmitting(true);
     
     try {
-      const res = await fetch('/api/submit-final', {
+      const res = await fetch('/portal/api/submit-final', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
