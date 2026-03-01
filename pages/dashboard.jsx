@@ -77,23 +77,27 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
           {/* Review Summary */}
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
             <h3 className="text-lg sm:text-xl font-bold mb-4 text-gray-800">Your Review Summary</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
-              <div className="bg-blue-50 p-4 sm:p-4 rounded border border-blue-200">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+              <div className="bg-blue-50 p-4 rounded border border-blue-200 col-span-2 sm:col-span-4">
                 <p className="text-2xl sm:text-3xl font-bold text-blue-700">{reviewCount}</p>
                 <p className="text-xs sm:text-sm text-gray-600">Reviews Written</p>
               </div>
-              <div className="bg-purple-50 p-4 sm:p-4 rounded border border-purple-200">
-                <p className="text-2xl sm:text-3xl font-bold text-purple-700">
-                  {reviewCount > 0 
-                    ? (reviewsWritten.reduce((sum, r) => sum + r.approachability + r.academicInclination + r.workEthics + r.maturity + r.openMindedness + r.academicEthics, 0) / (reviewCount * 6)).toFixed(1)
-                    : '0'}
-                </p>
-                <p className="text-xs sm:text-sm text-gray-600">Average Rating Given</p>
-              </div>
-              <div className="bg-green-50 p-4 sm:p-4 rounded border border-green-200">
-                <p className="text-2xl sm:text-3xl font-bold text-green-700">100%</p>
-                <p className="text-xs sm:text-sm text-gray-600">Completion</p>
-              </div>
+              {reviewCount > 0 && ([
+                { label: 'Approachability',     key: 'approachability' },
+                { label: 'Academic Inclination', key: 'academicInclination' },
+                { label: 'Work Ethics',          key: 'workEthics' },
+                { label: 'Maturity',             key: 'maturity' },
+                { label: 'Open-Mindedness',      key: 'openMindedness' },
+                { label: 'Academic Ethics',      key: 'academicEthics' },
+              ].map(({ label, key }) => (
+                <div key={key} className="bg-purple-50 p-3 rounded border border-purple-200">
+                  <p className="text-xl sm:text-2xl font-bold text-purple-700">
+                    {(reviewsWritten.reduce((sum, r) => sum + r[key], 0) / reviewCount).toFixed(1)}
+                    <span className="text-xs text-gray-400">/5</span>
+                  </p>
+                  <p className="text-xs text-gray-600">{label}</p>
+                </div>
+              )))}
             </div>
 
             {/* List of reviewed candidates */}
@@ -101,15 +105,25 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
               <h4 className="text-sm sm:text-base font-semibold mb-3 text-gray-700">People You Reviewed:</h4>
               <div className="space-y-2">
                 {reviewsWritten.map((review) => (
-                  <div key={review.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-gray-50 rounded border border-gray-200 gap-2">
-                    <div>
+                  <div key={review.id} className="p-3 bg-gray-50 rounded border border-gray-200">
+                    <div className="mb-2">
                       <p className="text-sm sm:text-base font-medium text-gray-800">{review.reviewee.name}</p>
                       <p className="text-xs text-gray-500">{review.reviewee.department}</p>
                     </div>
-                    <div className="text-left sm:text-right">
-                      <p className="text-xs sm:text-sm font-mono text-gray-600">
-                        Avg: {((review.approachability + review.academicInclination + review.workEthics + review.maturity + review.openMindedness + review.academicEthics) / 6).toFixed(1)}/5
-                      </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                      {[
+                        { label: 'Approachability',      val: review.approachability },
+                        { label: 'Academic Inclination', val: review.academicInclination },
+                        { label: 'Work Ethics',          val: review.workEthics },
+                        { label: 'Maturity',             val: review.maturity },
+                        { label: 'Open-Mindedness',      val: review.openMindedness },
+                        { label: 'Academic Ethics',      val: review.academicEthics },
+                      ].map(({ label, val }) => (
+                        <div key={label} className="flex justify-between items-center text-xs bg-white px-2 py-1 rounded border border-gray-100">
+                          <span className="text-gray-500">{label}</span>
+                          <span className="font-semibold text-gray-800">{val}/5</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
