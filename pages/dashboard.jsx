@@ -287,21 +287,20 @@ export async function getServerSideProps(context) {
     return { redirect: { destination: "/home", permanent: false } };
   }
 
-  const reviewCount = await prisma.review.count({
-    where: { reviewerId: session.user.id },
-  });
+  const [reviewsWritten, settings] = await Promise.all([
+    prisma.review.findMany({
+      where: { reviewerId: session.user.id },
+      include: {
+        reviewee: {
+          select: { name: true, department: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    }),
+    prisma.systemSettings.findFirst()
+  ]);
 
-  const reviewsWritten = await prisma.review.findMany({
-    where: { reviewerId: session.user.id },
-    include: {
-      reviewee: {
-        select: { name: true, department: true }
-      }
-    },
-    orderBy: { createdAt: 'desc' }
-  });
-
-  const settings = await prisma.systemSettings.findFirst();
+  const reviewCount = reviewsWritten.length; // No separate COUNT() query needed
 
   // FIX 2: Data Serialization
   // We use JSON.parse(JSON.stringify(...)) to strip out any complex Date objects

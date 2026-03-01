@@ -25,6 +25,7 @@ model User {
   @@index([department])
   @@index([hostel])
   @@index([hasSubmitted])
+  @@index([pors], type: Gin)
 }
 
 model Review {
