@@ -8,26 +8,29 @@ export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
   if (!session) return res.status(401).json({ error: "Unauthorized" });
 
-  const { q, skip = 0, take = 20 } = req.query;
+  const { q, skip = 0, take = 20, reviewed } = req.query;
 
   try {
-    logger.userAction('SEARCH', session.user.id, session.user.email, {
-      query: q || 'all',
-      skip: parseInt(skip),
-      take: parseInt(take)
-    });
+    // Debug: log session.user.id to verify it's not undefined
+    console.log('[search.js] session.user.id:', session.user.id, '| reviewed param:', reviewed);
+
+    // Build WHERE clause depending on whether we want reviewed or unreviewed
+    const reviewedFilter = reviewed === 'true'
+      ? { reviewsReceived: { some: { reviewerId: session.user.id } } }
+      : {};
 
     const users = await prisma.user.findMany({
       where: {
         AND: [
-          { id: { not: session.user.id } }, // Not myself
-          { isAdmin: false }, // Exclude all admins from candidate pool
+          { id: { not: session.user.id } },
+          { isAdmin: false },
           {
             OR: [
               { name: { contains: q || "", mode: "insensitive" } },
               { department: { contains: q || "", mode: "insensitive" } },
             ],
           },
+          reviewedFilter,
         ],
       },
       // Include the "reviewsReceived" specifically where the reviewer is ME

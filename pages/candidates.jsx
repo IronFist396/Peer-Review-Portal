@@ -34,6 +34,10 @@ export default function CandidatesPage({ hasSubmitted }) {
   const [skip, setSkip] = useState(0);
   const [recSkip, setRecSkip] = useState(0); // Separate skip for recommendations
   const [recHasMore, setRecHasMore] = useState(true);
+  const [reviewed, setReviewed] = useState([]);
+  const [reviewedSkip, setReviewedSkip] = useState(0);
+  const [reviewedHasMore, setReviewedHasMore] = useState(true);
+  const [loadingReviewed, setLoadingReviewed] = useState(false);
   const ITEMS_PER_PAGE = 20;
   
   // Tabs: 'suggested', 'all', 'reviewed'
@@ -115,6 +119,25 @@ export default function CandidatesPage({ hasSubmitted }) {
     }
   };
 
+  // 3b. Fetch Reviewed candidates independently when tab is activated
+  useEffect(() => {
+    if (activeTab !== 'reviewed' || !session) return;
+    setLoadingReviewed(true);
+    setReviewed([]);
+    setReviewedSkip(0);
+    setReviewedHasMore(true);
+    fetch(`/portal/api/search?q=&skip=0&take=${ITEMS_PER_PAGE}&reviewed=true`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.users && Array.isArray(data.users)) {
+          setReviewed(data.users);
+          setReviewedHasMore(data.hasMore);
+        }
+      })
+      .catch(err => console.error('Failed to fetch reviewed:', err))
+      .finally(() => setLoadingReviewed(false));
+  }, [activeTab, session]);
+
   // Load More for Recommendations
   const loadMoreRecommendations = async () => {
     if (loadingMore || !recHasMore) return;
@@ -148,9 +171,8 @@ export default function CandidatesPage({ hasSubmitted }) {
     // Show search results that are NOT reviewed yet
     displayedList = candidates.filter(u => !u.hasReviewed);
   } else if (activeTab === "reviewed") {
-    // Show only reviewed (from the search pool, or we could fetch all reviewed separately)
-    // For simplicity, we use the search pool which contains everyone matching the query
-    displayedList = candidates.filter(u => u.hasReviewed);
+    // Uses its own dedicated fetch - not dependent on the search/all pool
+    displayedList = reviewed;
   }
 
   return (
@@ -211,12 +233,15 @@ export default function CandidatesPage({ hasSubmitted }) {
 
         {/* The List */}
         <div className="space-y-3 sm:space-y-4">
-          {displayedList.length === 0 && !loading && (
+          {displayedList.length === 0 && !loading && !loadingReviewed && (
              <p className="text-sm sm:text-base text-gray-500 text-center py-8">
                {activeTab === "suggested" && "No direct matches found. Try searching in 'All Candidates'."}
                {activeTab === "all" && "No candidates found."}
                {activeTab === "reviewed" && "You haven't reviewed anyone yet."}
              </p>
+          )}
+          {activeTab === "reviewed" && loadingReviewed && (
+            <p className="text-sm sm:text-base text-gray-500 text-center py-8">Loading reviewed candidates...</p>
           )}
 
           {displayedList.map((user) => (
@@ -267,7 +292,7 @@ export default function CandidatesPage({ hasSubmitted }) {
             </div>
           )}
           
-          {(activeTab === "all" || activeTab === "reviewed") && hasMore && displayedList.length > 0 && (
+          {(activeTab === "all") && hasMore && displayedList.length > 0 && (
             <div className="text-center py-4">
               <button
                 onClick={loadMore}
@@ -275,6 +300,31 @@ export default function CandidatesPage({ hasSubmitted }) {
                 className="px-6 py-3 bg-[#142749] text-white rounded-lg hover:bg-[#1a3461] font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {loadingMore ? 'Loading...' : 'Load More'}
+              </button>
+            </div>
+          )}
+
+          {activeTab === "reviewed" && reviewedHasMore && displayedList.length > 0 && (
+            <div className="text-center py-4">
+              <button
+                onClick={async () => {
+                  setLoadingReviewed(true);
+                  const newSkip = reviewedSkip + ITEMS_PER_PAGE;
+                  try {
+                    const res = await fetch(`/portal/api/search?q=${query}&skip=${newSkip}&take=${ITEMS_PER_PAGE}&reviewed=true`);
+                    const data = await res.json();
+                    if (data.users && Array.isArray(data.users)) {
+                      setReviewed(prev => [...prev, ...data.users]);
+                      setReviewedSkip(newSkip);
+                      setReviewedHasMore(data.hasMore);
+                    }
+                  } catch (e) { console.error(e); }
+                  finally { setLoadingReviewed(false); }
+                }}
+                disabled={loadingReviewed}
+                className="px-6 py-3 bg-[#142749] text-white rounded-lg hover:bg-[#1a3461] font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {loadingReviewed ? 'Loading...' : 'Load More'}
               </button>
             </div>
           )}
