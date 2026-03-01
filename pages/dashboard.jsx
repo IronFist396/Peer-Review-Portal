@@ -77,13 +77,13 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
           {/* Review Summary */}
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
             <h3 className="text-lg sm:text-xl font-bold mb-4 text-gray-800">Your Review Summary</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded border border-blue-200 col-span-2 sm:col-span-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+              <div className="bg-blue-50 p-4 rounded border border-blue-200 col-span-2 sm:col-span-3">
                 <p className="text-2xl sm:text-3xl font-bold text-blue-700">{reviewCount}</p>
                 <p className="text-xs sm:text-sm text-gray-600">Reviews Written</p>
               </div>
               {reviewCount > 0 && ([
-                { label: 'Approachability',     key: 'approachability' },
+                { label: 'Approachability',      key: 'approachability' },
                 { label: 'Academic Inclination', key: 'academicInclination' },
                 { label: 'Work Ethics',          key: 'workEthics' },
                 { label: 'Maturity',             key: 'maturity' },
@@ -107,8 +107,8 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
                 {reviewsWritten.map((review) => (
                   <div key={review.id} className="p-3 bg-gray-50 rounded border border-gray-200">
                     <div className="mb-2">
-                      <p className="text-sm sm:text-base font-medium text-gray-800">{review.reviewee.name}</p>
-                      <p className="text-xs text-gray-500">{review.reviewee.department}</p>
+                      <p className="text-sm sm:text-base font-bold text-gray-900">{review.reviewee.name}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{review.reviewee.department}</p>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
                       {[
