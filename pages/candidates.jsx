@@ -353,7 +353,10 @@ export async function getServerSideProps(context) {
   // 2. Fetch Candidates (Example logic)
   const candidates = await prisma.user.findMany({
     where: {
-      NOT: { id: session.user.id }, // Don't show self
+      AND: [
+        { NOT: { id: session.user.id } }, // Don't show self
+        { isAdmin: false } // Hide admins from the candidate list
+      ]
       // Add your department logic here if needed
     },
     select: { id: true, name: true, department: true }

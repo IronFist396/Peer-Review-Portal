@@ -1,6 +1,7 @@
 // generate-clean-csv.js - Convert new.csv to clean normalized CSV format
 const fs = require('fs');
 const csv = require('csv-parser');
+const crypto = require('crypto');
 require('dotenv').config();
 
 // ==================== NORMALIZATION MAPS ====================
@@ -302,12 +303,12 @@ function extractPORs(row) {
   const pors = new Set()
   
   const porColumns = [
-    'Institute Councils\nDo NOT tick any option if you have not been a part of the following councils\n',
-    'Independent Bodies/Cells/Fests\nDo NOT tick any option if you have not been a part of the following activities',
-    'Technical Activities\nDo NOT tick any option if you have not been a part of the following activities',
-    'Cultural Activities\nDo NOT tick any option if you have not been a part of the following activities.',
-    'Department Councils\nDo NOT tick any option if you have not been a part of the following councils.\n',
-    'Sports + Clubs\nDo NOT tick any option if you have not been a part of the following clubs or sports teams'
+    'Institute Councils',
+    'Independent Bodies/Cells/Fests',
+    'Technical Activities',
+    'Cultural Activities',
+    'Department Councils',
+    'Sports + Clubs'
   ]
   
   porColumns.forEach(col => {
@@ -325,17 +326,26 @@ function extractPORs(row) {
 
 // ==================== CSV GENERATION ====================
 
+function generateRandomPassword(length = 8) {
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  const bytes = crypto.randomBytes(length);
+  let retVal = "";
+  for (let i = 0; i < length; i++) {
+      retVal += charset.charAt(bytes[i] % charset.length);
+  }
+  return retVal;
+}
+
 async function generateCleanCSV() {
-  console.log('📝 Generating clean CSV from new.csv...\n')
+  console.log('📝 Generating clean CSV from csv...\n')
   
   const users = []
-  const DEFAULT_PASSWORD = process.env.DEFAULT_USER_PASSWORD
   
   return new Promise((resolve, reject) => {
-    fs.createReadStream('new.csv')
+    fs.createReadStream('data/Peer Review Data - Sheet1.csv')
       .pipe(csv())
       .on('data', (row) => {
-        const rollNumber = row['Roll number']?.trim()
+        const rollNumber = row['roll number']?.trim()
         
         // Skip if no valid roll number
         if (!rollNumber) {
@@ -345,16 +355,16 @@ async function generateCleanCSV() {
         // Generate email from roll number (lowercase)
         const email = `${rollNumber.toLowerCase()}@iitb.ac.in`
         
-        const firstName = row['First Name']?.trim() || ''
-        const lastName = row['Last Name']?.trim() || ''
+        const firstName = row['first name']?.trim() || ''
+        const lastName = row['last name']?.trim() || ''
         const name = `${firstName} ${lastName}`.trim() || 'Unknown'
         
-        const department = normalizeDepartment(row['Department'])
-        const hostel = normalizeHostel(row['Hostel'])
+        const department = normalizeDepartment(row['department'])
+        const hostel = normalizeHostel(row['hostel'])
         
         // Parse year from strings like "4th year, DD/ IDDDP/ M.Sc."
         let year = 1
-        const yearMatch = row['Current year of study']?.match(/(\d+)/)
+        const yearMatch = row['year of study']?.match(/(\d+)/)
         if (yearMatch) {
           year = parseInt(yearMatch[1])
         }
@@ -369,11 +379,12 @@ async function generateCleanCSV() {
           hostel,
           pors: pors.join(','), // Join with comma for CSV
           isAdmin: 'FALSE',
-          password: DEFAULT_PASSWORD
+          password: generateRandomPassword(8)
         })
       })
       .on('end', () => {
-        console.log(`✓ Processed ${users.length} users from new.csv\n`)
+        console.log(`✓ Processed ${users.length} users from 
+          csv\n`)
         resolve(users)
       })
       .on('error', reject)
@@ -387,9 +398,8 @@ async function main() {
     
     // Get admin credentials from environment
     const ADMIN_EMAIL = process.env.ADMIN_EMAIL
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
+    const adminPassword = generateRandomPassword(8)
     const ADMIN_NAME = process.env.ADMIN_NAME
-    
     // Create CSV content
     const csvRows = []
     
@@ -397,7 +407,7 @@ async function main() {
     csvRows.push('email,name,department,year,hostel,pors,isAdmin,password')
     
     // Admin row (first)
-    csvRows.push(`${ADMIN_EMAIL},${ADMIN_NAME},Administration,4,NA,Admin,TRUE,${ADMIN_PASSWORD}`)
+    csvRows.push(`${ADMIN_EMAIL},${ADMIN_NAME},Administration,4,NA,Admin,TRUE,${adminPassword}`)
     
     // User rows
     users.forEach(user => {
@@ -416,11 +426,11 @@ async function main() {
     
     console.log(`✅ Clean CSV generated successfully!`)
     console.log(`   📄 File: ${outputPath}`)
-    console.log(`   👑 Admin: ${ADMIN_EMAIL}`)
+    console.log(`   👑 Admin: ${ADMIN_EMAIL} (Password: ${adminPassword})`)
     console.log(`   👥 Users: ${users.length}`)
-    console.log(`   🔑 Default password: ${process.env.DEFAULT_USER_PASSWORD}`)
+    console.log(`   🔑 Random passwords generated for all users!`)
     console.log(`\n💡 Now you can use this with the original seed.js:`)
-    console.log(`   1. Rename: mv users-clean.csv users.csv`)
+    // console.log(`   1. Rename: mv users-clean.csv users.csv`)
     console.log(`   2. Seed: node seed.js\n`)
     
   } catch (error) {

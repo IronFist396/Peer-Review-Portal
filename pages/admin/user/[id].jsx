@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // Donut Chart Component
 function DonutChart({ label, ratings, fieldName }) {
@@ -145,8 +145,10 @@ function DonutChart({ label, ratings, fieldName }) {
 
 export default function AdminUserDetail({ user }) {
   const [activeTab, setActiveTab] = useState('overview');
-  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
-  const [currentWrittenIndex, setCurrentWrittenIndex] = useState(0);
+  const [detailsById, setDetailsById] = useState({});
+  const [loadingById, setLoadingById] = useState({});
+  const receivedRefs = useRef({});
+  const writtenRefs = useRef({});
   
   // Helper function to calculate average of 6 ratings
   const calculateAvg = (review) => {
@@ -159,20 +161,117 @@ export default function AdminUserDetail({ user }) {
     return user.reviewsReceived.map(review => review[fieldName]);
   };
   
-  const nextReview = () => {
-    setCurrentReviewIndex((prev) => (prev + 1) % user.reviewsReceived.length);
-  };
-  
-  const prevReview = () => {
-    setCurrentReviewIndex((prev) => (prev - 1 + user.reviewsReceived.length) % user.reviewsReceived.length);
-  };
+  const loadReviewDetail = useCallback(async (reviewId) => {
+    if (!reviewId || detailsById[reviewId] || loadingById[reviewId]) return;
 
-  const nextWritten = () => {
-    setCurrentWrittenIndex((prev) => (prev + 1) % user.reviewsWritten.length);
-  };
-  
-  const prevWritten = () => {
-    setCurrentWrittenIndex((prev) => (prev - 1 + user.reviewsWritten.length) % user.reviewsWritten.length);
+    setLoadingById(prev => ({ ...prev, [reviewId]: true }));
+
+    try {
+      const response = await fetch(`/api/admin/review-detail?id=${reviewId}`);
+      if (!response.ok) return;
+
+      const data = await response.json();
+      if (data?.review) {
+        setDetailsById(prev => ({ ...prev, [reviewId]: data.review }));
+      }
+    } catch (error) {
+      console.error("Failed to load review details", error);
+    } finally {
+      setLoadingById(prev => ({ ...prev, [reviewId]: false }));
+    }
+  }, [detailsById, loadingById]);
+
+  useEffect(() => {
+    if (activeTab !== 'detailed') return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const reviewId = entry.target.getAttribute('data-review-id');
+            if (reviewId) {
+              loadReviewDetail(reviewId);
+            }
+          }
+        });
+      },
+      { root: null, rootMargin: '200px 0px', threshold: 0.1 }
+    );
+
+    const allNodes = [
+      ...Object.values(receivedRefs.current),
+      ...Object.values(writtenRefs.current)
+    ].filter(Boolean);
+
+    allNodes.forEach((node) => observer.observe(node));
+
+    return () => observer.disconnect();
+  }, [activeTab, loadReviewDetail]);
+
+  useEffect(() => {
+    if (activeTab !== 'detailed') return;
+
+    if (user.reviewsReceived[0]?.id) {
+      loadReviewDetail(user.reviewsReceived[0].id);
+    }
+
+    if (user.reviewsWritten[0]?.id) {
+      loadReviewDetail(user.reviewsWritten[0].id);
+    }
+  }, [activeTab, loadReviewDetail, user.reviewsReceived, user.reviewsWritten]);
+
+  const renderTextResponses = (reviewId) => {
+    const detail = detailsById[reviewId];
+    const isLoading = loadingById[reviewId];
+
+    if (isLoading && !detail) {
+      return (
+        <div className="bg-gray-50 p-4 rounded border border-gray-200">
+          <p className="text-sm text-gray-600">Loading detailed responses...</p>
+        </div>
+      );
+    }
+
+    if (!detail) {
+      return (
+        <div className="bg-gray-50 p-4 rounded border border-gray-200">
+          <p className="text-sm text-gray-600">Scroll to load detailed responses.</p>
+        </div>
+      );
+    }
+
+    const hasAnyText = detail.substanceAbuse || detail.ismpMentor || detail.otherComments;
+
+    if (!hasAnyText) {
+      return (
+        <div className="bg-gray-50 p-4 rounded border border-gray-200">
+          <p className="text-sm text-gray-600">No additional comments provided.</p>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {detail.substanceAbuse && (
+          <div className="bg-gray-50 p-4 rounded border border-gray-200">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Substance Abuse:</p>
+            <p className="text-sm text-gray-600">{detail.substanceAbuse}</p>
+          </div>
+        )}
+        {detail.ismpMentor && (
+          <div className="bg-gray-50 p-4 rounded border border-gray-200">
+            <p className="text-sm font-semibold text-gray-700 mb-2">ISMP Mentor:</p>
+            <p className="text-sm text-gray-600">{detail.ismpMentor}</p>
+          </div>
+        )}
+        {detail.otherComments && (
+          <div className="bg-gray-50 p-4 rounded border border-gray-200">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Other Comments:</p>
+            <p className="text-sm text-gray-600">{detail.otherComments}</p>
+          </div>
+        )}
+      </>
+    );
   };
 
   return (
@@ -266,143 +365,62 @@ export default function AdminUserDetail({ user }) {
             {/* Detailed Reviews Tab with Carousel */}
             {activeTab === 'detailed' && (
               <div className="mb-12">
-                <div className="relative">
-                  {/* Carousel Navigation */}
-                  <div className="flex justify-between items-center mb-4">
-                    <button
-                      onClick={prevReview}
-                      disabled={user.reviewsReceived.length <= 1}
-                      className="bg-[#142749] text-white px-4 py-2 rounded hover:bg-[#1a3461] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                <div className="space-y-6">
+                  {user.reviewsReceived.map((review, idx) => (
+                    <div
+                      key={review.id}
+                      data-review-id={review.id}
+                      ref={(element) => {
+                        if (element) {
+                          receivedRefs.current[review.id] = element;
+                        } else {
+                          delete receivedRefs.current[review.id];
+                        }
+                      }}
+                      className="bg-white border-2 border-gray-200 rounded-lg p-6 shadow-lg"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                      Previous
-                    </button>
-                    
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600">
-                        Review {currentReviewIndex + 1} of {user.reviewsReceived.length}
-                      </p>
-                    </div>
-                    
-                    <button
-                      onClick={nextReview}
-                      disabled={user.reviewsReceived.length <= 1}
-                      className="bg-[#142749] text-white px-4 py-2 rounded hover:bg-[#1a3461] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      Next
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  {/* Current Review Card */}
-                  {user.reviewsReceived[currentReviewIndex] && (
-                    <div className="bg-white border-2 border-gray-200 rounded-lg p-6 shadow-lg">
-                      <div className="mb-4">
-                        <p className="text-lg font-bold text-gray-800">
-                          Written by: {user.reviewsReceived[currentReviewIndex].reviewer.name}
-                        </p>
+                      <div className="mb-4 flex items-center justify-between">
+                        <p className="text-lg font-bold text-gray-800">Written by: {review.reviewer.name}</p>
+                        <p className="text-sm text-gray-500">#{idx + 1}</p>
                       </div>
-                      
-                      {/* Star Ratings Grid */}
+
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                         <div className="bg-blue-50 p-3 rounded border border-blue-200">
                           <p className="text-xs text-gray-600 mb-1">Approachability</p>
-                          <p className="text-xl font-bold text-blue-700">
-                            {user.reviewsReceived[currentReviewIndex].approachability}/5
-                          </p>
+                          <p className="text-xl font-bold text-blue-700">{review.approachability}/5</p>
                         </div>
                         <div className="bg-purple-50 p-3 rounded border border-purple-200">
                           <p className="text-xs text-gray-600 mb-1">Academic Inclination</p>
-                          <p className="text-xl font-bold text-purple-700">
-                            {user.reviewsReceived[currentReviewIndex].academicInclination}/5
-                          </p>
+                          <p className="text-xl font-bold text-purple-700">{review.academicInclination}/5</p>
                         </div>
                         <div className="bg-green-50 p-3 rounded border border-green-200">
                           <p className="text-xs text-gray-600 mb-1">Work Ethics</p>
-                          <p className="text-xl font-bold text-green-700">
-                            {user.reviewsReceived[currentReviewIndex].workEthics}/5
-                          </p>
+                          <p className="text-xl font-bold text-green-700">{review.workEthics}/5</p>
                         </div>
                         <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
                           <p className="text-xs text-gray-600 mb-1">Maturity</p>
-                          <p className="text-xl font-bold text-yellow-700">
-                            {user.reviewsReceived[currentReviewIndex].maturity}/5
-                          </p>
+                          <p className="text-xl font-bold text-yellow-700">{review.maturity}/5</p>
                         </div>
                         <div className="bg-pink-50 p-3 rounded border border-pink-200">
                           <p className="text-xs text-gray-600 mb-1">Open Mindedness</p>
-                          <p className="text-xl font-bold text-pink-700">
-                            {user.reviewsReceived[currentReviewIndex].openMindedness}/5
-                          </p>
+                          <p className="text-xl font-bold text-pink-700">{review.openMindedness}/5</p>
                         </div>
                         <div className="bg-indigo-50 p-3 rounded border border-indigo-200">
                           <p className="text-xs text-gray-600 mb-1">Academic Ethics</p>
-                          <p className="text-xl font-bold text-indigo-700">
-                            {user.reviewsReceived[currentReviewIndex].academicEthics}/5
-                          </p>
+                          <p className="text-xl font-bold text-indigo-700">{review.academicEthics}/5</p>
                         </div>
                       </div>
 
-                      {/* Text Responses */}
-                      <div className="space-y-3 mb-4">
-                        {user.reviewsReceived[currentReviewIndex].substanceAbuse && (
-                          <div className="bg-gray-50 p-4 rounded border border-gray-200">
-                            <p className="text-sm font-semibold text-gray-700 mb-2">Substance Abuse:</p>
-                            <p className="text-sm text-gray-600">
-                              {user.reviewsReceived[currentReviewIndex].substanceAbuse}
-                            </p>
-                          </div>
-                        )}
-                        {user.reviewsReceived[currentReviewIndex].ismpMentor && (
-                          <div className="bg-gray-50 p-4 rounded border border-gray-200">
-                            <p className="text-sm font-semibold text-gray-700 mb-2">ISMP Mentor:</p>
-                            <p className="text-sm text-gray-600">
-                              {user.reviewsReceived[currentReviewIndex].ismpMentor}
-                            </p>
-                          </div>
-                        )}
-                        {user.reviewsReceived[currentReviewIndex].otherComments && (
-                          <div className="bg-gray-50 p-4 rounded border border-gray-200">
-                            <p className="text-sm font-semibold text-gray-700 mb-2">Other Comments:</p>
-                            <p className="text-sm text-gray-600">
-                              {user.reviewsReceived[currentReviewIndex].otherComments}
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                      <div className="space-y-3 mb-4">{renderTextResponses(review.id)}</div>
 
-                      {/* Average Score */}
                       <div className="border-t pt-3">
                         <p className="text-right">
                           <span className="text-sm text-gray-600">Average: </span>
-                          <span className="text-2xl font-bold text-[#142749]">
-                            {calculateAvg(user.reviewsReceived[currentReviewIndex])}/5
-                          </span>
+                          <span className="text-2xl font-bold text-[#142749]">{calculateAvg(review)}/5</span>
                         </p>
                       </div>
                     </div>
-                  )}
-
-                  {/* Dots Indicator */}
-                  {user.reviewsReceived.length > 1 && (
-                    <div className="flex justify-center gap-2 mt-4">
-                      {user.reviewsReceived.map((_, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setCurrentReviewIndex(idx)}
-                          className={`w-2 h-2 rounded-full transition-all ${
-                            idx === currentReviewIndex 
-                              ? 'bg-[#ffc10b] w-6' 
-                              : 'bg-gray-300 hover:bg-gray-400'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  ))}
                 </div>
               </div>
             )}
@@ -420,143 +438,62 @@ export default function AdminUserDetail({ user }) {
           </div>
         ) : (
           <div className="mb-12">
-            <div className="relative">
-              {/* Carousel Navigation */}
-              <div className="flex justify-between items-center mb-4">
-                <button
-                  onClick={prevWritten}
-                  disabled={user.reviewsWritten.length <= 1}
-                  className="bg-[#142749] text-white px-4 py-2 rounded hover:bg-[#1a3461] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            <div className="space-y-6">
+              {user.reviewsWritten.map((review, idx) => (
+                <div
+                  key={review.id}
+                  data-review-id={review.id}
+                  ref={(element) => {
+                    if (element) {
+                      writtenRefs.current[review.id] = element;
+                    } else {
+                      delete writtenRefs.current[review.id];
+                    }
+                  }}
+                  className="bg-white border-2 border-gray-200 rounded-lg p-6 shadow-lg"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  Previous
-                </button>
-                
-                <div className="text-center">
-                  <p className="text-sm text-gray-600">
-                    Review {currentWrittenIndex + 1} of {user.reviewsWritten.length}
-                  </p>
-                </div>
-                
-                <button
-                  onClick={nextWritten}
-                  disabled={user.reviewsWritten.length <= 1}
-                  className="bg-[#142749] text-white px-4 py-2 rounded hover:bg-[#1a3461] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  Next
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Current Written Review Card */}
-              {user.reviewsWritten[currentWrittenIndex] && (
-                <div className="bg-white border-2 border-gray-200 rounded-lg p-6 shadow-lg">
-                  <div className="mb-4">
-                    <p className="text-lg font-bold text-gray-800">
-                      Reviewing: {user.reviewsWritten[currentWrittenIndex].reviewee.name}
-                    </p>
+                  <div className="mb-4 flex items-center justify-between">
+                    <p className="text-lg font-bold text-gray-800">Reviewing: {review.reviewee.name}</p>
+                    <p className="text-sm text-gray-500">#{idx + 1}</p>
                   </div>
-                  
-                  {/* Star Ratings Grid */}
+
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                     <div className="bg-blue-50 p-3 rounded border border-blue-200">
                       <p className="text-xs text-gray-600 mb-1">Approachability</p>
-                      <p className="text-xl font-bold text-blue-700">
-                        {user.reviewsWritten[currentWrittenIndex].approachability}/5
-                      </p>
+                      <p className="text-xl font-bold text-blue-700">{review.approachability}/5</p>
                     </div>
                     <div className="bg-purple-50 p-3 rounded border border-purple-200">
                       <p className="text-xs text-gray-600 mb-1">Academic Inclination</p>
-                      <p className="text-xl font-bold text-purple-700">
-                        {user.reviewsWritten[currentWrittenIndex].academicInclination}/5
-                      </p>
+                      <p className="text-xl font-bold text-purple-700">{review.academicInclination}/5</p>
                     </div>
                     <div className="bg-green-50 p-3 rounded border border-green-200">
                       <p className="text-xs text-gray-600 mb-1">Work Ethics</p>
-                      <p className="text-xl font-bold text-green-700">
-                        {user.reviewsWritten[currentWrittenIndex].workEthics}/5
-                      </p>
+                      <p className="text-xl font-bold text-green-700">{review.workEthics}/5</p>
                     </div>
                     <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
                       <p className="text-xs text-gray-600 mb-1">Maturity</p>
-                      <p className="text-xl font-bold text-yellow-700">
-                        {user.reviewsWritten[currentWrittenIndex].maturity}/5
-                      </p>
+                      <p className="text-xl font-bold text-yellow-700">{review.maturity}/5</p>
                     </div>
                     <div className="bg-pink-50 p-3 rounded border border-pink-200">
                       <p className="text-xs text-gray-600 mb-1">Open Mindedness</p>
-                      <p className="text-xl font-bold text-pink-700">
-                        {user.reviewsWritten[currentWrittenIndex].openMindedness}/5
-                      </p>
+                      <p className="text-xl font-bold text-pink-700">{review.openMindedness}/5</p>
                     </div>
                     <div className="bg-indigo-50 p-3 rounded border border-indigo-200">
                       <p className="text-xs text-gray-600 mb-1">Academic Ethics</p>
-                      <p className="text-xl font-bold text-indigo-700">
-                        {user.reviewsWritten[currentWrittenIndex].academicEthics}/5
-                      </p>
+                      <p className="text-xl font-bold text-indigo-700">{review.academicEthics}/5</p>
                     </div>
                   </div>
 
-                  {/* Text Responses */}
-                  <div className="space-y-3 mb-4">
-                    {user.reviewsWritten[currentWrittenIndex].substanceAbuse && (
-                      <div className="bg-gray-50 p-4 rounded border border-gray-200">
-                        <p className="text-sm font-semibold text-gray-700 mb-2">Substance Abuse:</p>
-                        <p className="text-sm text-gray-600">
-                          {user.reviewsWritten[currentWrittenIndex].substanceAbuse}
-                        </p>
-                      </div>
-                    )}
-                    {user.reviewsWritten[currentWrittenIndex].ismpMentor && (
-                      <div className="bg-gray-50 p-4 rounded border border-gray-200">
-                        <p className="text-sm font-semibold text-gray-700 mb-2">ISMP Mentor:</p>
-                        <p className="text-sm text-gray-600">
-                          {user.reviewsWritten[currentWrittenIndex].ismpMentor}
-                        </p>
-                      </div>
-                    )}
-                    {user.reviewsWritten[currentWrittenIndex].otherComments && (
-                      <div className="bg-gray-50 p-4 rounded border border-gray-200">
-                        <p className="text-sm font-semibold text-gray-700 mb-2">Other Comments:</p>
-                        <p className="text-sm text-gray-600">
-                          {user.reviewsWritten[currentWrittenIndex].otherComments}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  <div className="space-y-3 mb-4">{renderTextResponses(review.id)}</div>
 
-                  {/* Average Score */}
                   <div className="border-t pt-3">
                     <p className="text-right">
                       <span className="text-sm text-gray-600">Average: </span>
-                      <span className="text-2xl font-bold text-[#ffc10b]">
-                        {calculateAvg(user.reviewsWritten[currentWrittenIndex])}/5
-                      </span>
+                      <span className="text-2xl font-bold text-[#ffc10b]">{calculateAvg(review)}/5</span>
                     </p>
                   </div>
                 </div>
-              )}
-
-              {/* Dots Indicator */}
-              {user.reviewsWritten.length > 1 && (
-                <div className="flex justify-center gap-2 mt-4">
-                  {user.reviewsWritten.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentWrittenIndex(idx)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        idx === currentWrittenIndex 
-                          ? 'bg-[#ffc10b] w-6' 
-                          : 'bg-gray-300 hover:bg-gray-400'
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
           </div>
         )}
@@ -590,15 +527,41 @@ export async function getServerSideProps(context) {
 
   const rawUser = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      department: true,
       reviewsWritten: {
-        include: { reviewee: { select: { name: true } } }
+        select: {
+          id: true,
+          approachability: true,
+          academicInclination: true,
+          workEthics: true,
+          maturity: true,
+          openMindedness: true,
+          academicEthics: true,
+          reviewee: { select: { name: true } }
+        }
       },
       reviewsReceived: {
-        include: { reviewer: { select: { name: true } } }
+        select: {
+          id: true,
+          approachability: true,
+          academicInclination: true,
+          workEthics: true,
+          maturity: true,
+          openMindedness: true,
+          academicEthics: true,
+          reviewer: { select: { name: true } }
+        }
       }
     }
   });
+
+  if (!rawUser) {
+    return { notFound: true };
+  }
 
   // THE FIX:
   // 1. JSON.stringify turns everything (including Date objects) into strings.

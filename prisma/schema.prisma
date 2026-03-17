@@ -46,6 +46,9 @@ model Review {
   reviewer            User     @relation("WrittenReviews", fields: [reviewerId], references: [id])
 
   @@unique([reviewerId, revieweeId])
+  @@index([reviewerId])
+  @@index([revieweeId])
+  @@index([reviewerId, createdAt])
 }
 
 model SystemSettings {
