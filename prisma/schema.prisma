@@ -26,6 +26,8 @@ model User {
   @@index([hostel])
   @@index([hasSubmitted])
   @@index([pors], type: Gin)
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([department(ops: raw("gin_trgm_ops"))], type: Gin)
 }
 
 model Review {
