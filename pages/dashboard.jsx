@@ -110,7 +110,7 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
                       <p className="text-sm sm:text-base font-bold text-gray-900">{review.reviewee.name}</p>
                       <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{review.reviewee.department}</p>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                    {/* <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
                       {[
                         { label: 'Approachability',      val: review.approachability },
                         { label: 'Academic Inclination', val: review.academicInclination },
@@ -124,7 +124,7 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
                           <span className="font-semibold text-gray-800">{val}/5</span>
                         </div>
                       ))}
-                    </div>
+                    </div> */}
                   </div>
                 ))}
               </div>
