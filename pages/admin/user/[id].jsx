@@ -143,12 +143,158 @@ function DonutChart({ label, ratings, fieldName }) {
   );
 }
 
+// Carousel Component
+function ReviewCarousel({ reviews, type, onLoadDetail, renderDetails, calculateAvg }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (reviews[currentIndex]) {
+      onLoadDetail(reviews[currentIndex].id);
+    }
+  }, [currentIndex, reviews, onLoadDetail]);
+
+  const nextSlide = () => {
+    if (currentIndex < reviews.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+    }
+  };
+
+  const prevSlide = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+    }
+  };
+
+  if (!reviews || reviews.length === 0) {
+    return (
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+        <p className="text-gray-500 italic">No reviews found.</p>
+      </div>
+    );
+  }
+
+  const review = reviews[currentIndex];
+
+  return (
+    <div className="relative">
+      <div className="bg-white border-2 border-gray-200 rounded-lg p-6 shadow-lg min-h-[400px] flex flex-col">
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-lg font-bold text-gray-800">
+            {type === "received" ? "Written by: " : "Reviewing: "}
+            {type === "received" ? review.reviewer.name : review.reviewee.name}
+          </p>
+          <p className="text-sm text-gray-500">
+            {currentIndex + 1} of {reviews.length}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+          <div className="bg-blue-50 p-3 rounded border border-blue-200">
+            <p className="text-xs text-gray-600 mb-1">Approachability</p>
+            <p className="text-xl font-bold text-blue-700">
+              {review.approachability}/5
+            </p>
+          </div>
+          <div className="bg-purple-50 p-3 rounded border border-purple-200">
+            <p className="text-xs text-gray-600 mb-1">Academic Inclination</p>
+            <p className="text-xl font-bold text-purple-700">
+              {review.academicInclination}/5
+            </p>
+          </div>
+          <div className="bg-green-50 p-3 rounded border border-green-200">
+            <p className="text-xs text-gray-600 mb-1">Work Ethics</p>
+            <p className="text-xl font-bold text-green-700">
+              {review.workEthics}/5
+            </p>
+          </div>
+          <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
+            <p className="text-xs text-gray-600 mb-1">Maturity</p>
+            <p className="text-xl font-bold text-yellow-700">
+              {review.maturity}/5
+            </p>
+          </div>
+          <div className="bg-pink-50 p-3 rounded border border-pink-200">
+            <p className="text-xs text-gray-600 mb-1">Open Mindedness</p>
+            <p className="text-xl font-bold text-pink-700">
+              {review.openMindedness}/5
+            </p>
+          </div>
+          <div className="bg-indigo-50 p-3 rounded border border-indigo-200">
+            <p className="text-xs text-gray-600 mb-1">Academic Ethics</p>
+            <p className="text-xl font-bold text-indigo-700">
+              {review.academicEthics}/5
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3 mb-4 flex-grow">
+          {renderDetails(review.id)}
+        </div>
+
+        <div className="border-t pt-3 mt-auto">
+          <p className="text-right">
+            <span className="text-sm text-gray-600">Average: </span>
+            <span className="text-2xl font-bold text-[#142749]">
+              {calculateAvg(review)}/5
+            </span>
+          </p>
+        </div>
+      </div>
+
+      {reviews.length > 1 && (
+        <>
+          <button
+            onClick={prevSlide}
+            disabled={currentIndex === 0}
+            className={`absolute left-[-2rem] top-1/2 -translate-y-1/2 p-2 rounded-full shadow-lg transition-all focus:outline-none ${
+              currentIndex === 0
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
+                : "bg-[#142749] text-white hover:bg-[#1a3461] hover:scale-110"
+            }`}
+            aria-label="Previous review"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+          </button>
+          
+          <button
+            onClick={nextSlide}
+            disabled={currentIndex === reviews.length - 1}
+            className={`absolute right-[-2rem] top-1/2 -translate-y-1/2 p-2 rounded-full shadow-lg transition-all focus:outline-none ${
+              currentIndex === reviews.length - 1
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
+                : "bg-[#142749] text-white hover:bg-[#1a3461] hover:scale-110"
+            }`}
+            aria-label="Next review"
+          >
+           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+          
+          <div className="flex justify-center gap-2 mt-4">
+            {reviews.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentIndex(idx)}
+                className={`w-2.5 h-2.5 rounded-full transition-all ${
+                  idx === currentIndex ? "bg-[#142749] w-4" : "bg-gray-300"
+                }`}
+                aria-label={`Go to review ${idx + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function AdminUserDetail({ user }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [detailsById, setDetailsById] = useState({});
   const [loadingById, setLoadingById] = useState({});
-  const receivedRefs = useRef({});
-  const writtenRefs = useRef({});
   
   // Helper function to calculate average of 6 ratings
   const calculateAvg = (review) => {
@@ -167,7 +313,7 @@ export default function AdminUserDetail({ user }) {
     setLoadingById(prev => ({ ...prev, [reviewId]: true }));
 
     try {
-      const response = await fetch(`/api/admin/review-detail?id=${reviewId}`);
+      const response = await fetch(`/portal/api/admin/review-detail?id=${reviewId}`);
       if (!response.ok) return;
 
       const data = await response.json();
@@ -181,45 +327,8 @@ export default function AdminUserDetail({ user }) {
     }
   }, [detailsById, loadingById]);
 
-  useEffect(() => {
-    if (activeTab !== 'detailed') return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const reviewId = entry.target.getAttribute('data-review-id');
-            if (reviewId) {
-              loadReviewDetail(reviewId);
-            }
-          }
-        });
-      },
-      { root: null, rootMargin: '200px 0px', threshold: 0.1 }
-    );
-
-    const allNodes = [
-      ...Object.values(receivedRefs.current),
-      ...Object.values(writtenRefs.current)
-    ].filter(Boolean);
-
-    allNodes.forEach((node) => observer.observe(node));
-
-    return () => observer.disconnect();
-  }, [activeTab, loadReviewDetail]);
-
-  useEffect(() => {
-    if (activeTab !== 'detailed') return;
-
-    if (user.reviewsReceived[0]?.id) {
-      loadReviewDetail(user.reviewsReceived[0].id);
-    }
-
-    if (user.reviewsWritten[0]?.id) {
-      loadReviewDetail(user.reviewsWritten[0].id);
-    }
-  }, [activeTab, loadReviewDetail, user.reviewsReceived, user.reviewsWritten]);
-
+  // Initial load is now handled by the ReviewCarousel component (when it mounts)
+  
   const renderTextResponses = (reviewId) => {
     const detail = detailsById[reviewId];
     const isLoading = loadingById[reviewId];
@@ -365,63 +474,13 @@ export default function AdminUserDetail({ user }) {
             {/* Detailed Reviews Tab with Carousel */}
             {activeTab === 'detailed' && (
               <div className="mb-12">
-                <div className="space-y-6">
-                  {user.reviewsReceived.map((review, idx) => (
-                    <div
-                      key={review.id}
-                      data-review-id={review.id}
-                      ref={(element) => {
-                        if (element) {
-                          receivedRefs.current[review.id] = element;
-                        } else {
-                          delete receivedRefs.current[review.id];
-                        }
-                      }}
-                      className="bg-white border-2 border-gray-200 rounded-lg p-6 shadow-lg"
-                    >
-                      <div className="mb-4 flex items-center justify-between">
-                        <p className="text-lg font-bold text-gray-800">Written by: {review.reviewer.name}</p>
-                        <p className="text-sm text-gray-500">#{idx + 1}</p>
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                        <div className="bg-blue-50 p-3 rounded border border-blue-200">
-                          <p className="text-xs text-gray-600 mb-1">Approachability</p>
-                          <p className="text-xl font-bold text-blue-700">{review.approachability}/5</p>
-                        </div>
-                        <div className="bg-purple-50 p-3 rounded border border-purple-200">
-                          <p className="text-xs text-gray-600 mb-1">Academic Inclination</p>
-                          <p className="text-xl font-bold text-purple-700">{review.academicInclination}/5</p>
-                        </div>
-                        <div className="bg-green-50 p-3 rounded border border-green-200">
-                          <p className="text-xs text-gray-600 mb-1">Work Ethics</p>
-                          <p className="text-xl font-bold text-green-700">{review.workEthics}/5</p>
-                        </div>
-                        <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
-                          <p className="text-xs text-gray-600 mb-1">Maturity</p>
-                          <p className="text-xl font-bold text-yellow-700">{review.maturity}/5</p>
-                        </div>
-                        <div className="bg-pink-50 p-3 rounded border border-pink-200">
-                          <p className="text-xs text-gray-600 mb-1">Open Mindedness</p>
-                          <p className="text-xl font-bold text-pink-700">{review.openMindedness}/5</p>
-                        </div>
-                        <div className="bg-indigo-50 p-3 rounded border border-indigo-200">
-                          <p className="text-xs text-gray-600 mb-1">Academic Ethics</p>
-                          <p className="text-xl font-bold text-indigo-700">{review.academicEthics}/5</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 mb-4">{renderTextResponses(review.id)}</div>
-
-                      <div className="border-t pt-3">
-                        <p className="text-right">
-                          <span className="text-sm text-gray-600">Average: </span>
-                          <span className="text-2xl font-bold text-[#142749]">{calculateAvg(review)}/5</span>
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <ReviewCarousel 
+                  reviews={user.reviewsReceived} 
+                  type="received"
+                  onLoadDetail={loadReviewDetail}
+                  renderDetails={renderTextResponses}
+                  calculateAvg={calculateAvg}
+                />
               </div>
             )}
           </>
@@ -438,63 +497,13 @@ export default function AdminUserDetail({ user }) {
           </div>
         ) : (
           <div className="mb-12">
-            <div className="space-y-6">
-              {user.reviewsWritten.map((review, idx) => (
-                <div
-                  key={review.id}
-                  data-review-id={review.id}
-                  ref={(element) => {
-                    if (element) {
-                      writtenRefs.current[review.id] = element;
-                    } else {
-                      delete writtenRefs.current[review.id];
-                    }
-                  }}
-                  className="bg-white border-2 border-gray-200 rounded-lg p-6 shadow-lg"
-                >
-                  <div className="mb-4 flex items-center justify-between">
-                    <p className="text-lg font-bold text-gray-800">Reviewing: {review.reviewee.name}</p>
-                    <p className="text-sm text-gray-500">#{idx + 1}</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                    <div className="bg-blue-50 p-3 rounded border border-blue-200">
-                      <p className="text-xs text-gray-600 mb-1">Approachability</p>
-                      <p className="text-xl font-bold text-blue-700">{review.approachability}/5</p>
-                    </div>
-                    <div className="bg-purple-50 p-3 rounded border border-purple-200">
-                      <p className="text-xs text-gray-600 mb-1">Academic Inclination</p>
-                      <p className="text-xl font-bold text-purple-700">{review.academicInclination}/5</p>
-                    </div>
-                    <div className="bg-green-50 p-3 rounded border border-green-200">
-                      <p className="text-xs text-gray-600 mb-1">Work Ethics</p>
-                      <p className="text-xl font-bold text-green-700">{review.workEthics}/5</p>
-                    </div>
-                    <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
-                      <p className="text-xs text-gray-600 mb-1">Maturity</p>
-                      <p className="text-xl font-bold text-yellow-700">{review.maturity}/5</p>
-                    </div>
-                    <div className="bg-pink-50 p-3 rounded border border-pink-200">
-                      <p className="text-xs text-gray-600 mb-1">Open Mindedness</p>
-                      <p className="text-xl font-bold text-pink-700">{review.openMindedness}/5</p>
-                    </div>
-                    <div className="bg-indigo-50 p-3 rounded border border-indigo-200">
-                      <p className="text-xs text-gray-600 mb-1">Academic Ethics</p>
-                      <p className="text-xl font-bold text-indigo-700">{review.academicEthics}/5</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 mb-4">{renderTextResponses(review.id)}</div>
-
-                  <div className="border-t pt-3">
-                    <p className="text-right">
-                      <span className="text-sm text-gray-600">Average: </span>
-                      <span className="text-2xl font-bold text-[#ffc10b]">{calculateAvg(review)}/5</span>
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ReviewCarousel 
+              reviews={user.reviewsWritten} 
+              type="written"
+              onLoadDetail={loadReviewDetail}
+              renderDetails={renderTextResponses}
+              calculateAvg={calculateAvg}
+            />
           </div>
         )}
 
