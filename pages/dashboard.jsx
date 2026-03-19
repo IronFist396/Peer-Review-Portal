@@ -77,28 +77,35 @@ export default function Dashboard({ user, reviewCount, reviewsWritten, reviewsEn
           {/* Review Summary */}
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
             <h3 className="text-lg sm:text-xl font-bold mb-4 text-gray-800">Your Review Summary</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded border border-blue-200 col-span-2 sm:col-span-3">
-                <p className="text-2xl sm:text-3xl font-bold text-blue-700">{reviewCount}</p>
-                <p className="text-xs sm:text-sm text-gray-600">Reviews Written</p>
-              </div>
-              {reviewCount > 0 && ([
-                { label: 'Approachability',      key: 'approachability' },
-                { label: 'Academic Inclination', key: 'academicInclination' },
-                { label: 'Work Ethics',          key: 'workEthics' },
-                { label: 'Maturity',             key: 'maturity' },
-                { label: 'Open-Mindedness',      key: 'openMindedness' },
-                { label: 'Academic Ethics',      key: 'academicEthics' },
-              ].map(({ label, key }) => (
-                <div key={key} className="bg-purple-50 p-3 rounded border border-purple-200">
-                  <p className="text-xl sm:text-2xl font-bold text-purple-700">
-                    {(reviewsWritten.reduce((sum, r) => sum + r[key], 0) / reviewCount).toFixed(1)}
-                    <span className="text-xs text-gray-400">/5</span>
-                  </p>
-                  <p className="text-xs text-gray-600">{label}</p>
-                </div>
-              )))}
+            {/* Reviews Written Count */}
+            <div className="bg-blue-50 p-4 rounded border border-blue-200 mb-6">
+              <p className="text-2xl sm:text-3xl font-bold text-blue-700">{reviewCount}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Reviews Written</p>
             </div>
+
+            {reviewCount > 0 && (
+              <>
+                <h4 className="text-sm sm:text-base font-semibold mb-3 text-gray-700">Average Ratings Given:</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+                  {[
+                    { label: 'Approachability',      key: 'approachability' },
+                    { label: 'Academic Inclination', key: 'academicInclination' },
+                    { label: 'Work Ethics',          key: 'workEthics' },
+                    { label: 'Maturity',             key: 'maturity' },
+                    { label: 'Open-Mindedness',      key: 'openMindedness' },
+                    { label: 'Academic Ethics',      key: 'academicEthics' },
+                  ].map(({ label, key }) => (
+                    <div key={key} className="bg-purple-50 p-3 rounded border border-purple-200">
+                      <p className="text-xl sm:text-2xl font-bold text-purple-700">
+                        {(reviewsWritten.reduce((sum, r) => sum + r[key], 0) / reviewCount).toFixed(1)}
+                        <span className="text-xs text-gray-400">/5</span>
+                      </p>
+                      <p className="text-xs text-gray-600">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
 
             {/* List of reviewed candidates */}
             <div>
