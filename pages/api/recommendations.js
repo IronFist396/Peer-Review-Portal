@@ -16,7 +16,7 @@ export default async function handler(req, res) {
       select: { department: true, hostel: true, pors: true }
     });
 
-    // 2. Find matches
+    // 2. Find ALL potential matches (fetch all to sort by relevance globally)
     const matches = await prisma.user.findMany({
       where: {
         AND: [
@@ -38,8 +38,7 @@ export default async function handler(req, res) {
           select: { id: true }
         }
       },
-      skip: parseInt(skip),
-      take: parseInt(take) + 1, // Fetch 1 extra to check if more exist
+      // Removed distinct skip/take to allow global sorting
     });
 
     // 4. Clean up data and explain WHY they matched
@@ -96,8 +95,12 @@ export default async function handler(req, res) {
       return a.name.localeCompare(b.name); // Alphabetical if tied
     });
 
-    const hasMore = sorted.length > parseInt(req.query.take);
-    const returnUsers = hasMore ? sorted.slice(0, -1) : sorted;
+    const skipVal = parseInt(skip);
+    const takeVal = parseInt(take);
+    
+    // Slice manually
+    const returnUsers = sorted.slice(skipVal, skipVal + takeVal);
+    const hasMore = (skipVal + takeVal) < sorted.length;
 
     res.status(200).json({
       users: returnUsers,
