@@ -20,12 +20,12 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: "Forbidden - Admin access required" });
   }
 
-  const { type = 'all', limit = 100 } = req.query;
+  const { type = 'all', limit = 100, search = '', skip = 0 } = req.query;
 
   try {
     // Dynamic import to avoid module loading issues
     const { getRecentLogs } = require('@/lib/logger');
-    const logs = getRecentLogs(type, parseInt(limit));
+    const logs = getRecentLogs(type, parseInt(limit), search, parseInt(skip));
     res.status(200).json({ logs });
   } catch (error) {
     console.error('Error fetching logs:', error);

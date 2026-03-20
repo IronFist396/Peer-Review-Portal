@@ -67,9 +67,16 @@ export default async function handler(req, res) {
       },
     });
 
+    // Get reviewee name for better logs
+    const reviewee = await prisma.user.findUnique({
+      where: { id: revieweeId },
+      select: { name: true }
+    });
+
     logger.userAction('SUBMIT_REVIEW', session.user.id, session.user.email, {
+      message: `Submitted review for ${reviewee?.name || revieweeId}`,
       revieweeId,
-      action: result ? 'update' : 'create',
+      revieweeName: reviewee?.name,
       ratings: { approachability, academicInclination, workEthics, maturity, openMindedness, academicEthics }
     });
 

@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+const { logger } = require("@/lib/logger");
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -36,12 +37,21 @@ export default async function handler(req, res) {
       }
     });
 
+    logger.userAction('SUBMIT_FINAL', session.user.id, session.user.email, {
+      message: "User successfully submitted final reviews",
+      submittedAt: updatedUser.submittedAt
+    });
+
     res.status(200).json({ 
       success: true, 
       message: "Reviews submitted successfully!",
       submittedAt: updatedUser.submittedAt
     });
   } catch (error) {
+    logger.error('SUBMIT_FINAL', 'Final submission failed', error, {
+      userId: session.user.id,
+      error: error.message
+    });
     console.error(error);
     res.status(500).json({ error: "Failed to submit reviews" });
   }
