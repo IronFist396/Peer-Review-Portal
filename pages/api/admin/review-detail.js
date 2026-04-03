@@ -31,6 +31,8 @@ export default async function handler(req, res) {
     where: { id },
     select: {
       id: true,
+      substanceUseStance: true,
+      substanceUseObserved: true,
       substanceAbuse: true,
       ismpMentor: true,
       otherComments: true,

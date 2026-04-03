@@ -18,12 +18,28 @@ export default async function handler(req, res) {
     maturity,
     openMindedness,
     academicEthics,
+    substanceUseStance,
+    substanceUseObserved,
     substanceAbuse,
     ismpMentor,
     otherComments
   } = req.body;
 
+  const parsedSubstanceUseStance = parseInt(substanceUseStance, 10);
+  const normalizedSubstanceUseStance = Number.isInteger(parsedSubstanceUseStance) && parsedSubstanceUseStance >= 1 && parsedSubstanceUseStance <= 5
+    ? parsedSubstanceUseStance
+    : null;
+
+  const normalizedSubstanceUseObserved =
+    typeof substanceUseObserved === "boolean" ? substanceUseObserved : null;
+
   try {
+    if (normalizedSubstanceUseStance === null || normalizedSubstanceUseObserved === null) {
+      return res.status(400).json({
+        message: "Please provide valid values for substance usage stance and observed usage"
+      });
+    }
+
     // Check if reviews are enabled
     const settings = await prisma.systemSettings.findFirst();
     if (settings && !settings.reviewsEnabled) {
@@ -47,6 +63,8 @@ export default async function handler(req, res) {
         maturity: parseInt(maturity),
         openMindedness: parseInt(openMindedness),
         academicEthics: parseInt(academicEthics),
+        substanceUseStance: normalizedSubstanceUseStance,
+        substanceUseObserved: normalizedSubstanceUseObserved,
         substanceAbuse: substanceAbuse || "",
         ismpMentor: ismpMentor || "",
         otherComments: otherComments || "",
@@ -61,6 +79,8 @@ export default async function handler(req, res) {
         maturity: parseInt(maturity),
         openMindedness: parseInt(openMindedness),
         academicEthics: parseInt(academicEthics),
+        substanceUseStance: normalizedSubstanceUseStance,
+        substanceUseObserved: normalizedSubstanceUseObserved,
         substanceAbuse: substanceAbuse || "",
         ismpMentor: ismpMentor || "",
         otherComments: otherComments || "",
@@ -77,7 +97,9 @@ export default async function handler(req, res) {
       message: `Submitted review for ${reviewee?.name || revieweeId}`,
       revieweeId,
       revieweeName: reviewee?.name,
-      ratings: { approachability, academicInclination, workEthics, maturity, openMindedness, academicEthics }
+      ratings: { approachability, academicInclination, workEthics, maturity, openMindedness, academicEthics },
+      substanceUseStance: normalizedSubstanceUseStance,
+      substanceUseObserved: normalizedSubstanceUseObserved
     });
 
     return res.status(200).json({ message: 'Success' });

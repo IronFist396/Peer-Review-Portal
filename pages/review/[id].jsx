@@ -67,6 +67,104 @@ function TextSection({ value, onChange, label, placeholder, helperText }) {
   );
 }
 
+function ScaleChoiceSection({ value, onChange, label, helperText }) {
+  const options = [
+    { score: 1, text: "Totally against" },
+    { score: 2, text: "Somewhat against" },
+    { score: 3, text: "Neutral" },
+    { score: 4, text: "Somewhat in favour" },
+    { score: 5, text: "Strongly in favour" },
+  ];
+
+  return (
+    <div className="mb-6 h-full">
+      <div className="bg-[#142749] text-white text-center py-3 rounded-t-lg font-semibold text-sm sm:text-base">
+        {label}
+      </div>
+      <div className="bg-gray-100 p-4 sm:p-6 rounded-b-lg h-[calc(100%-48px)] flex flex-col justify-between">
+        <div>
+          <div className="relative mb-3 rounded-xl border border-gray-300 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-yellow-400 to-red-500" />
+            <div className="relative grid grid-cols-5">
+              {options.map((option) => (
+                <button
+                  key={`bar-${option.score}`}
+                  type="button"
+                  onClick={() => onChange(option.score)}
+                  className={`h-11 border-r border-white/40 last:border-r-0 transition-all ${
+                    value === option.score
+                      ? "ring-2 ring-[#142749] ring-inset bg-black/10"
+                      : "hover:bg-white/15"
+                  }`}
+                  aria-label={`Set stance to ${option.score}`}
+                >
+                  <span className={`font-bold text-sm ${value === option.score ? "text-[#142749]" : "text-white"}`}>
+                    {option.score}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-5 gap-2">
+            {options.map((option) => (
+              <p
+                key={`label-${option.score}`}
+                className={`text-center text-[11px] leading-tight ${
+                  value === option.score ? "font-semibold text-[#142749]" : "text-gray-600"
+                }`}
+              >
+                {option.text}
+              </p>
+            ))}
+          </div>
+        </div>
+        {helperText && (
+          <p className="mt-3 text-center text-sm bg-[#ffc10b] text-black py-1 px-2 rounded font-medium">
+            {helperText}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function YesNoSection({ value, onChange, label }) {
+  return (
+    <div className="mb-6 h-full">
+      <div className="bg-[#142749] text-white text-center py-3 rounded-t-lg font-semibold text-sm sm:text-base">
+        {label}
+      </div>
+      <div className="bg-gray-100 p-4 sm:p-6 rounded-b-lg h-[calc(100%-48px)] flex items-center">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center w-full">
+          <button
+            type="button"
+            onClick={() => onChange("yes")}
+            className={`px-6 py-3 rounded-lg border font-semibold transition-all ${
+              value === "yes"
+                ? "bg-green-600 border-green-700 text-white shadow-md ring-2 ring-green-300"
+                : "bg-white border-gray-300 text-gray-700 hover:border-green-500"
+            }`}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange("no")}
+            className={`px-6 py-3 rounded-lg border font-semibold transition-all ${
+              value === "no"
+                ? "bg-red-600 border-red-700 text-white shadow-md ring-2 ring-red-300"
+                : "bg-white border-gray-300 text-gray-700 hover:border-red-500"
+            }`}
+          >
+            No
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ReviewPage({ candidate, existingReview }) {
   const router = useRouter();
   
@@ -77,6 +175,11 @@ export default function ReviewPage({ candidate, existingReview }) {
     maturity: existingReview?.maturity || 0,
     openMindedness: existingReview?.openMindedness || 0,
     academicEthics: existingReview?.academicEthics || 0,
+    substanceUseStance: existingReview?.substanceUseStance || 0,
+    substanceUseObserved:
+      typeof existingReview?.substanceUseObserved === "boolean"
+        ? (existingReview.substanceUseObserved ? "yes" : "no")
+        : "",
     substanceAbuse: existingReview?.substanceAbuse || "",
     ismpMentor: existingReview?.ismpMentor || "",
     otherComments: existingReview?.otherComments || "",
@@ -105,6 +208,16 @@ export default function ReviewPage({ candidate, existingReview }) {
       return;
     }
 
+    if (formData.substanceUseStance === 0) {
+      alert('Please choose the candidate\'s stance on substance use');
+      return;
+    }
+
+    if (!formData.substanceUseObserved) {
+      alert('Please choose whether you have observed this candidate using substances on campus');
+      return;
+    }
+
     if (!formData.ismpMentor.trim()) {
       alert('Please fill in the ISMP Mentor field');
       return;
@@ -117,7 +230,8 @@ export default function ReviewPage({ candidate, existingReview }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         revieweeId: candidate.id,
-        ...formData
+        ...formData,
+        substanceUseObserved: formData.substanceUseObserved === 'yes'
       }),
     });
 
@@ -181,13 +295,28 @@ export default function ReviewPage({ candidate, existingReview }) {
             />
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+            <ScaleChoiceSection
+              label="Candidate stance on substance use"
+              value={formData.substanceUseStance}
+              onChange={(val) => setFormData({ ...formData, substanceUseStance: val })}
+              helperText="1 = totally against, 3 = neutral, 5 = strongly in favour"
+            />
+
+            <YesNoSection
+              label="Have you observed this candidate using substances on campus?"
+              value={formData.substanceUseObserved}
+              onChange={(val) => setFormData({ ...formData, substanceUseObserved: val })}
+            />
+          </div>
+
           {/* Substance Abuse Text Area */}
           <TextSection
-            label="Substance Abuse"
+            label="Additional notes regarding substance abuse"
             value={formData.substanceAbuse}
             onChange={(val) => setFormData({ ...formData, substanceAbuse: val })}
-            placeholder="Write a short answer"
-            helperText="Explain your answer briefly"
+            placeholder="Write your note here (mention NO if nothing to mention)"
+            helperText="Mention NO if nothing to mention"
           />
 
           {/* Second Row - 3 Ratings */}
@@ -301,6 +430,8 @@ export async function getServerSideProps(context) {
     maturity: existingReview.maturity,
     openMindedness: existingReview.openMindedness,
     academicEthics: existingReview.academicEthics,
+    substanceUseStance: existingReview.substanceUseStance,
+    substanceUseObserved: existingReview.substanceUseObserved,
     substanceAbuse: existingReview.substanceAbuse,
     ismpMentor: existingReview.ismpMentor,
     otherComments: existingReview.otherComments,

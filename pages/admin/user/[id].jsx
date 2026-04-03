@@ -143,6 +143,38 @@ function DonutChart({ label, ratings, fieldName }) {
   );
 }
 
+function DistributionBarChart({ label, data, valueSuffix = "" }) {
+  const maxCount = Math.max(...data.map((item) => item.count), 1);
+
+  return (
+    <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
+      <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">{label}</h3>
+      <div className="h-52 flex items-end justify-between gap-3 border-b border-l border-gray-200 px-2 pb-2">
+        {data.map((item) => {
+          const heightPercent = (item.count / maxCount) * 100;
+
+          return (
+            <div key={item.key} className="flex-1 min-w-0 flex flex-col items-center justify-end h-full">
+              <div className="text-xs text-gray-600 mb-1">{item.count}{valueSuffix}</div>
+              <div className="w-full max-w-[56px] h-full flex items-end">
+                <div
+                  className="w-full rounded-t-md transition-all"
+                  style={{
+                    height: item.count > 0 ? `${Math.max(heightPercent, 8)}%` : "0%",
+                    background: item.color,
+                  }}
+                  title={`${item.name}: ${item.count}${valueSuffix}`}
+                />
+              </div>
+              <div className="text-[11px] text-center text-gray-700 mt-2 leading-tight">{item.name}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // Carousel Component
 function ReviewCarousel({ reviews, type, onLoadDetail, renderDetails, calculateAvg }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -306,6 +338,39 @@ export default function AdminUserDetail({ user }) {
   const getRatingsByField = (fieldName) => {
     return user.reviewsReceived.map(review => review[fieldName]);
   };
+
+  const getSubstanceUseStanceDistribution = () => {
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    user.reviewsReceived.forEach((review) => {
+      const score = review.substanceUseStance;
+      if (score >= 1 && score <= 5) {
+        counts[score] += 1;
+      }
+    });
+
+    return [
+      { key: "1", name: "1 (Against)", count: counts[1], color: "#16a34a" },
+      { key: "2", name: "2", count: counts[2], color: "#65a30d" },
+      { key: "3", name: "3 (Neutral)", count: counts[3], color: "#ca8a04" },
+      { key: "4", name: "4", count: counts[4], color: "#ea580c" },
+      { key: "5", name: "5 (In Favour)", count: counts[5], color: "#dc2626" },
+    ];
+  };
+
+  const getObservedUsageDistribution = () => {
+    let yesCount = 0;
+    let noCount = 0;
+
+    user.reviewsReceived.forEach((review) => {
+      if (review.substanceUseObserved === true) yesCount += 1;
+      if (review.substanceUseObserved === false) noCount += 1;
+    });
+
+    return [
+      { key: "yes", name: "Yes", count: yesCount, color: "#16a34a" },
+      { key: "no", name: "No", count: noCount, color: "#dc2626" },
+    ];
+  };
   
   const loadReviewDetail = useCallback(async (reviewId) => {
     if (!reviewId || detailsById[reviewId] || loadingById[reviewId]) return;
@@ -363,13 +428,13 @@ export default function AdminUserDetail({ user }) {
       <>
         {detail.substanceAbuse && (
           <div className="bg-gray-50 p-4 rounded border border-gray-200">
-            <p className="text-sm font-semibold text-gray-700 mb-2">Substance Abuse:</p>
+            <p className="text-sm font-semibold text-gray-700 mb-2">Additional Notes Regarding Substance Abuse:</p>
             <p className="text-sm text-gray-600">{detail.substanceAbuse}</p>
           </div>
         )}
         {detail.ismpMentor && (
           <div className="bg-gray-50 p-4 rounded border border-gray-200">
-            <p className="text-sm font-semibold text-gray-700 mb-2">ISMP Mentor:</p>
+            <p className="text-sm font-semibold text-gray-700 mb-2">Do you think he/she will be a good ISMP mentor?</p>
             <p className="text-sm text-gray-600">{detail.ismpMentor}</p>
           </div>
         )}
@@ -468,6 +533,17 @@ export default function AdminUserDetail({ user }) {
                     fieldName="academicEthics"
                   />
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <DistributionBarChart
+                    label="Substance Use Stance Distribution"
+                    data={getSubstanceUseStanceDistribution()}
+                  />
+                  <DistributionBarChart
+                    label="Observed Substance Use on Campus"
+                    data={getObservedUsageDistribution()}
+                  />
+                </div>
               </div>
             )}
 
@@ -562,6 +638,8 @@ export async function getServerSideProps(context) {
           maturity: true,
           openMindedness: true,
           academicEthics: true,
+          substanceUseStance: true,
+          substanceUseObserved: true,
           reviewer: { select: { name: true } }
         }
       }

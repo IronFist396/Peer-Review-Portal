@@ -43,6 +43,8 @@ model Review {
   openMindedness      Int
   otherComments       String?
   substanceAbuse      String?
+  substanceUseObserved Boolean?
+  substanceUseStance  Int?
   workEthics          Int
   reviewee            User     @relation("ReceivedReviews", fields: [revieweeId], references: [id])
   reviewer            User     @relation("WrittenReviews", fields: [reviewerId], references: [id])
