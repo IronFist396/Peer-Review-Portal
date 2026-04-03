@@ -9,13 +9,13 @@ async function addUser() {
   
   const user = await prisma.user.create({
     data: {
-      email: 'newuser@iitb.ac.in',
+      email: 'newuser@iitb.ac.in'.toLowerCase(),
       name: 'New User Name',
       password: hashedPassword,
       department: 'CS',
       year: 3,
       hostel: 'Hostel 2',
-      pors: 'WnCC',
+      pors: ['WnCC'],
       isAdmin: false,
     },
   });

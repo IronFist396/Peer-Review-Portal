@@ -397,7 +397,7 @@ async function main() {
     const users = await generateCleanCSV()
     
     // Get admin credentials from environment
-    const ADMIN_EMAIL = process.env.ADMIN_EMAIL
+    const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').trim().toLowerCase()
     const adminPassword = generateRandomPassword(8)
     const ADMIN_NAME = process.env.ADMIN_NAME
     // Create CSV content

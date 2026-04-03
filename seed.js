@@ -22,7 +22,7 @@ async function main() {
     const values = parseCSVLine(lines[i])
     
     const userData = {
-      email: values[0].trim(),
+      email: values[0].trim().toLowerCase(),
       name: values[1].trim(),
       department: values[2].trim(),
       year: parseInt(values[3].trim()),
@@ -44,6 +44,7 @@ async function main() {
         hostel: userData.hostel,
         pors: userData.pors,
         isAdmin: userData.isAdmin,
+        email: userData.email,
       },
       create: {
         email: userData.email,
