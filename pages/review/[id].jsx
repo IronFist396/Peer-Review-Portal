@@ -84,7 +84,7 @@ function ScaleChoiceSection({ value, onChange, label, helperText }) {
       <div className="bg-gray-100 p-4 sm:p-6 rounded-b-lg h-[calc(100%-48px)] flex flex-col justify-between">
         <div>
           <div className="relative mb-3 rounded-xl border border-gray-300 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-yellow-400 to-red-500" />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-gray-300 to-slate-400" />
             <div className="relative grid grid-cols-5">
               {options.map((option) => (
                 <button
@@ -93,12 +93,12 @@ function ScaleChoiceSection({ value, onChange, label, helperText }) {
                   onClick={() => onChange(option.score)}
                   className={`h-11 border-r border-white/40 last:border-r-0 transition-all ${
                     value === option.score
-                      ? "ring-2 ring-[#142749] ring-inset bg-black/10"
-                      : "hover:bg-white/15"
+                      ? "ring-2 ring-[#142749] ring-inset bg-white/40"
+                      : "hover:bg-white/25"
                   }`}
                   aria-label={`Set stance to ${option.score}`}
                 >
-                  <span className={`font-bold text-sm ${value === option.score ? "text-[#142749]" : "text-white"}`}>
+                  <span className={`font-bold text-sm ${value === option.score ? "text-[#142749]" : "text-gray-700"}`}>
                     {option.score}
                   </span>
                 </button>
@@ -142,8 +142,8 @@ function YesNoSection({ value, onChange, label }) {
             onClick={() => onChange("yes")}
             className={`px-6 py-3 rounded-lg border font-semibold transition-all ${
               value === "yes"
-                ? "bg-green-600 border-green-700 text-white shadow-md ring-2 ring-green-300"
-                : "bg-white border-gray-300 text-gray-700 hover:border-green-500"
+                ? "bg-[#142749] border-[#142749] text-white shadow-md ring-2 ring-[#8fa3c7]"
+                : "bg-white border-gray-300 text-gray-700 hover:border-[#142749]"
             }`}
           >
             Yes
@@ -153,8 +153,8 @@ function YesNoSection({ value, onChange, label }) {
             onClick={() => onChange("no")}
             className={`px-6 py-3 rounded-lg border font-semibold transition-all ${
               value === "no"
-                ? "bg-red-600 border-red-700 text-white shadow-md ring-2 ring-red-300"
-                : "bg-white border-gray-300 text-gray-700 hover:border-red-500"
+                ? "bg-[#142749] border-[#142749] text-white shadow-md ring-2 ring-[#8fa3c7]"
+                : "bg-white border-gray-300 text-gray-700 hover:border-[#142749]"
             }`}
           >
             No
