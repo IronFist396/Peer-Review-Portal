@@ -291,7 +291,12 @@ export async function getServerSideProps(context) {
   });
 
   if (!user) {
-    return { redirect: { destination: "/home", permanent: false } };
+    return {
+      redirect: {
+        destination: "/api/auth/signout?callbackUrl=%2Fportal%2Fhome",
+        permanent: false,
+      },
+    };
   }
 
   const [reviewsWritten, settings] = await Promise.all([

@@ -26,12 +26,7 @@ export async function middleware(req) {
     }
   }
   
-  // 2. Redirect authenticated users away from Login (/portal/home)
-  if (token && pathname === publicPath) {
-    return NextResponse.redirect(new URL(dashboardPath, req.url));
-  }
-  
-  // 3. Protect private routes
+  // 2. Protect private routes
   const isProtectedPath = 
     pathname.startsWith(dashboardPath) || 
     pathname.startsWith(`${basePath}/candidates`) || 
