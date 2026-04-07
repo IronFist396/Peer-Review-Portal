@@ -293,7 +293,7 @@ export async function getServerSideProps(context) {
   if (!user) {
     return {
       redirect: {
-        destination: "/portal/api/auth/signout?callbackUrl=%2Fportal%2Fhome",
+        destination: "/api/auth/signout?callbackUrl=%2Fportal%2Fhome",
         permanent: false,
       },
     };
